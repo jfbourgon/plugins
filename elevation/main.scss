@@ -1,0 +1,156 @@
+
+// Toolbar wrapper and content
+.rv-mapnav-elevation-content {
+
+  &.hidden {
+    display: none !important;
+  }
+
+  .rv-elevation-button {
+    margin: 0px!important;
+  }
+
+  .rv-control-active {
+    background-color: rgba(200, 200, 200, 0.5);
+    clip-path: circle(12px at center);
+  }
+
+  .rv-control-active > md-icon {
+    color: #000;
+  }
+
+}
+
+// Dialog
+#elevationInfoPanel {
+
+  display: flex;
+  flex: 1;
+  width: 90%;
+  max-width: 800px;
+  height: 600px;
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+
+  &.rv-elevation-dialog-hidden {
+    visibility: hidden;
+  }
+
+  .panel-body {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .toolbar {
+    display: flex;
+    flex: 0;
+    flex-direction: row;
+    padding-top: 10px;
+    // border: solid 1px red;
+
+    md-switch {
+      margin: 0;
+    }
+
+    .menubar {
+      flex: 1;
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding-right: 20px;
+    }
+
+  }
+
+  .content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    // border: solid 1px blue;
+    justify-content: center;
+    align-items: center;
+
+    .rv-elevation-infopanel-chart {
+      align-self: stretch;
+      flex: 1;
+      /* width: 100%; */
+      /* height: 100%; */
+      margin: 10px 15px 15px 15px;
+      background-color: lightgray;
+    }
+
+    .rv-elevation-infopanel-statistics-table {
+      flex: 1;
+      display: flex;
+      /* width: 100%; */
+      /* height: 100%; */
+      margin: 15px;
+      justify-content: center;
+      align-items: center;
+    }
+
+
+
+  }
+
+  md-progress-linear {
+
+    position: absolute;
+    top: 0;
+    bottom: initial;
+    left: 0;
+    right: 0;
+    height: 3px;
+
+    .md-container {
+      height: 3px;
+    }
+
+  }
+
+}
+
+.rv-elevation-step-menu {
+
+  min-width: 180px !important;
+
+  .md-button md-icon {
+    margin: auto;
+  }
+
+}
+
+
+.rv-elevation-dialog-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  top: 0px !important;
+  left: 0px !important;
+  bottom: 0px !important;
+  right: 0px !important;
+  padding: 10px;
+  bottom: 0px;
+}
+
+// HACK : this should be set in RV main stylesheet
+rv-mapnav {
+
+  span.rv-spacer:last-child {
+    flex: 0 0 30px !important;
+  }
+
+}
