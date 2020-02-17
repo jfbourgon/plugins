@@ -1,4 +1,4 @@
-import { MultiLineLayer, MultilineTextSymbol } from './MultiLine';
+import { MultiLineLayer, MultilineTextSymbol } from './multiLine';
 
 /**
  * Creates and manages draw toolbar.
@@ -118,7 +118,7 @@ export class DrawToolbar {
         (<any>this)._areaParams.lengthUnit = this._bundle.GeomService.UNIT_KILOMETER;
         (<any>this)._areaParams.areaUnit = this._bundle.GeomService.UNIT_SQUARE_KILOMETERS;
         (<any>this)._areaParams.calculationType = 'preserveShape';
-        
+
         // define on draw complete event
         let that = this;
         this._toolbar.on('draw-complete', evt => { this.addToMap(evt, this._symbols); });
@@ -234,7 +234,7 @@ export class DrawToolbar {
 
     simulateClick(pt, mouse) {
         const mapPoint = this._mapApi.esriMap.toMap(new this._bundle.ScreenPoint({ x: pt[0], y: pt[1] }));
-        this._mapApi.esriMap.emit(mouse, { mapPoint: new this._bundle.Point(mapPoint.x, mapPoint.y, this._mapApi.esriMap.spatialReference) }); 
+        this._mapApi.esriMap.emit(mouse, { mapPoint: new this._bundle.Point(mapPoint.x, mapPoint.y, this._mapApi.esriMap.spatialReference) });
     }
 
     setExtentPoints(value: number[], final) {
@@ -300,7 +300,7 @@ export class DrawToolbar {
             'rings': [[[geometry.xmin, geometry.ymin], [geometry.xmin, geometry.ymax], [geometry.xmax, geometry.ymax], [geometry.xmax, geometry.ymin], [geometry.xmin, geometry.ymin]]],
             'spatialReference': this._mapApi.fgpMapObj.spatialReference
         });
-        
+
         this.geometryLength = 0;
         this.densifyGeom(poly);
     }
@@ -316,7 +316,7 @@ export class DrawToolbar {
                 i--;
             }
         }
-    
+
         // add the new distance
         const graphic = new this._bundle.Graphic(this.mapPoints[1], new this._bundle.TextSymbol(`${evt.distance.toFixed(2)} km`));
         graphic.key = 'tmp';
@@ -345,7 +345,7 @@ export class DrawToolbar {
         const newGraphic = new this._bundle.Graphic(evt.geometries[0], new this._bundle.TextSymbol(`${graphic.length} km\n${graphic.area} km\u00b2`));
         newGraphic.key = this.graphicKey;
         this.graphicsLayer.add(newGraphic);
-        
+
         this.createBackground();
     }
 
@@ -365,7 +365,7 @@ export class DrawToolbar {
             rect.setAttribute('height', String(lBox.height - 2));
             rect.setAttribute('fill', 'rgba(255,255,255,0.9)');
 
-            $(rect).insertBefore(graphic); 
+            $(rect).insertBefore(graphic);
         }
     }
 
@@ -377,7 +377,7 @@ export class DrawToolbar {
 
         this._geometryService.densify(params, geoms => {
             const graphics = this.graphicsLayer.graphics;
-            
+
             const key: string[] = ['tmp'];
             for (let graphic of graphics) {
                 if (geoms[0].getExtent().intersects(graphic.geometry)) {
