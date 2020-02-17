@@ -3,6 +3,7 @@ import { stringify as toWKT } from 'wellknown';
 import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 
 const FileSaver = require('file-saver');
+var Chart = require('chart.js');
 
 import { INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
@@ -56,7 +57,7 @@ export default class InfoPanel {
     const wkt = toWKT(geojson);
 
     const panel = this.mapApi.panels.create(INFO_PANEL_ID, 1);
-    // panel.header.title = 'Title';
+    panel.header.title = 'Title';
 
     const close = panel.header.closeButton;
     close.removeClass('primary');
@@ -102,7 +103,7 @@ export default class InfoPanel {
 
       $scope.steps = [5, 10, 20, 50, 100];
       $scope.stepFactor = 10;
-      $scope.smoothProfile = true;
+      $scope.smoothProfile = false;
 
       $scope.result = null;
       that.setResult(null);
@@ -131,12 +132,61 @@ export default class InfoPanel {
         }
       }
 
+      $scope.handleSmoothChange = function() {
+        // console.warn(value);
+        $scope.smoothProfile = !$scope.smoothProfile;
+        $scope.updateChart();
+      }
+
       $scope.handleStepChange = function(stepFactor) {
         $scope.stepFactor = stepFactor;
         $scope.doRequest();
       }
 
-      $scope.updateChart = function(data) {
+      $scope.updateChart = function() {
+
+        console.warn($scope.chart);
+        console.warn($scope.smoothProfile);
+
+        let data = that.getResult();
+
+        Chart.defaults.global.animation = false;
+        Chart.defaults.global.title = { display: false }
+        Chart.defaults.global.legend.display = false;
+
+        var el = document.getElementById('rv-elevation-chart');
+        var ctx = (<any>el).getContext('2d');
+
+
+        $scope.chart = new Chart(ctx, {
+            // The type of chart we want to create
+            type: 'line',
+options: {
+
+  maintainAspectRatio: true,
+  layout: {
+
+    padding: {
+        left: 20,
+        right: 30,
+        top: 30,
+        bottom: 20
+    }
+}
+},
+            // The data for our dataset
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                datasets: [{
+                  tension: $scope.smoothProfile ? 0.4 : 0,
+                  cubicInterpolationMode: 'monotone',
+                spanGaps: true,
+                    backgroundColor: 'rgba(217,205,229, 0.5)',
+                    borderColor: '#6A50A3',
+                    data: [0, null, 5, 2, 20, 30, 45]
+                }]
+            }
+        });
         $scope.result = data;
       }
 
@@ -162,7 +212,7 @@ export default class InfoPanel {
 
           $scope.result = data;
           that.setResult(data);
-          $scope.updateChart(data);
+          $scope.updateChart();
 
         }, function errorCallback(response) {
             $scope.status = 'error';

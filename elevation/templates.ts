@@ -52,7 +52,7 @@ export const INFO_PANEL_TEMPLATE = ` 
                     </md-menu-content>
                 </md-menu>
 
-                <md-switch ng-model="smoothProfile" ng-disabled="status === 'loading'" ng-if="mode === 'profile'" class="md-primary" aria-label="Smooth Profile">
+                <md-switch ng-model="smoothProfile" ng-disabled="status === 'loading'" ng-if="mode === 'profile'" class="md-primary" aria-label="Smooth Profile" ng-change="handleSmoothChange()">
                     <md-label>Smooth Profile</md-label>
                 </md-switch>
 
@@ -65,7 +65,10 @@ export const INFO_PANEL_TEMPLATE = ` 
             <div ng-if="isStatisticsTableVisible()" class="rv-elevation-infopanel-statistics-table">
                 <div>STATISTICS TABLE</div>
             </div>
-            <div ng-if="isProfileChartVisible()" class="rv-elevation-infopanel-chart">
+
+            <div class="rv-elevation-infopanel-chart" ng-class="{ 'hidden': !isProfileChartVisible()}">
+                <canvas style="width: 100%; height: 100%;"  id="rv-elevation-chart">
+                </canvas>
             </div>
 
             <md-button class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">Retry</md-button>
