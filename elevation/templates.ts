@@ -40,7 +40,7 @@ export const INFO_PANEL_TEMPLATE = ` 
                     </md-button>
                     <md-menu-content class="rv-menu rv-dense rv-elevation-step-menu">
                         <md-menu-item ng-disabled={true}>
-                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.8em; color: #aaa;'>{{ 'plugins.elevation.infoPanel.stepMenuBtn.tooltip' | translate | uppercase }}</span>
+                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.6em; color: #aaa;'>{{ 'plugins.elevation.infoPanel.stepMenuBtn.tooltip' | translate | uppercase }}</span>
                         </md-menu-item>
                         <md-menu-divider class="rv-lg"></md-menu-divider>
                         <md-menu-item ng-repeat="step in steps">
@@ -66,8 +66,9 @@ export const INFO_PANEL_TEMPLATE = ` 
                 <div>STATISTICS TABLE</div>
             </div>
 
-            <div class="rv-elevation-infopanel-chart" ng-class="{ 'hidden': !isProfileChartVisible()}">
-                <canvas style="width: 100%; height: 100%;"  id="rv-elevation-chart">
+            <div class="rv-elevation-infopanel-chart" ng-class="{ 'disabled': status === 'loading', 'hidden': !isProfileChartVisible()}">
+                <canvas id="rv-elevation-chart" style="width: 100%; height: 100%;" role="img" aria-label="Elevation Profile Chart">
+                    <p>Elevation Profile Chart</p>
                 </canvas>
             </div>
 

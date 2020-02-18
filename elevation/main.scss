@@ -88,6 +88,11 @@
       /* height: 100%; */
       margin: 10px 15px 15px 15px;
       background-color: #eee;
+
+      &.disabled {
+        opacity: 0.3;
+      }
+
     }
 
     .rv-elevation-infopanel-statistics-table {

@@ -69,10 +69,10 @@ export class UI {
       ['esri/symbols/SimpleFillSymbol', 'SimpleFillSymbol'],
       ['dojo/i18n!esri/nls/jsapi', 'i18n'],
       ['esri/geometry/Point', 'Point'],
-      ['esri/geometry/Polygon', 'Polygon']
+      ['esri/geometry/Polygon', 'Polygon'],
+      ['esri/SpatialReference', 'SpatialReference'],
+      ['esri/geometry/geometryEngine', 'geometryEngine']
     ]);
-
-
 
     let that = this;
     let drawToolbar;
@@ -232,7 +232,7 @@ export class UI {
 
   showInfoPanel(geometry) {
 
-    let infoPanel = new InfoPanel(this.mapApi, this.mode, null);
+    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.mode, null);
 
     // this.infoPanel = infoPanel;
 
