@@ -40,7 +40,7 @@ export const INFO_PANEL_TEMPLATE = ` 
                     </md-button>
                     <md-menu-content class="rv-menu rv-dense rv-elevation-step-menu">
                         <md-menu-item ng-disabled={true}>
-                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.6em; color: #aaa;'>{{ 'plugins.elevation.infoPanel.stepMenuBtn.tooltip' | translate | uppercase }}</span>
+                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.7rem; color: #aaa;'>{{ 'plugins.elevation.infoPanel.stepMenuBtn.tooltip' | translate | uppercase }}</span>
                         </md-menu-item>
                         <md-menu-divider class="rv-lg"></md-menu-divider>
                         <md-menu-item ng-repeat="step in steps">
@@ -52,8 +52,8 @@ export const INFO_PANEL_TEMPLATE = ` 
                     </md-menu-content>
                 </md-menu>
 
-                <md-switch ng-model="smoothProfile" ng-disabled="status === 'loading'" ng-if="mode === 'profile'" class="md-primary" aria-label="Smooth Profile" ng-change="handleSmoothChange()">
-                    <md-label>Smooth Profile</md-label>
+                <md-switch ng-model="smoothProfile" ng-disabled="status === 'loading'" ng-if="mode === 'profile'" class="md-primary" aria-label="{{ 'plugins.elevation.infoPanel.smoothProfileBtn.label' | translate }}" ng-change="handleSmoothChange()">
+                    <md-label>{{ 'plugins.elevation.infoPanel.smoothProfileBtn.label' | translate }}</md-label>
                 </md-switch>
 
             </md-menu-bar>
@@ -67,12 +67,14 @@ export const INFO_PANEL_TEMPLATE = ` 
             </div>
 
             <div class="rv-elevation-infopanel-chart" ng-class="{ 'disabled': status === 'loading', 'hidden': !isProfileChartVisible()}">
-                <canvas id="rv-elevation-chart" style="width: 100%; height: 100%;" role="img" aria-label="Elevation Profile Chart">
-                    <p>Elevation Profile Chart</p>
+                <canvas id="rv-elevation-chart" style="width: 100%; height: 100%;" role="img" aria-label="{{ 'plugins.elevation.infoPanel.chart.label' | translate }}">
+                    <p>{{ 'plugins.elevation.infoPanel.chart.label' | translate }}</p>
+                    <span id="elevation-chart-x-axis-label" class="hidden">{{ 'plugins.elevation.infoPanel.chart.xAxisLabel' | translate }}</span>
+                    <span id="elevation-chart-y-axis-label" class="hidden">{{ 'plugins.elevation.infoPanel.chart.yAxisLabel' | translate }}</span>
                 </canvas>
             </div>
 
-            <md-button class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">Retry</md-button>
+            <md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>
 
         </div>
 
@@ -88,7 +90,7 @@ export const DOWNLOAD_BUTTON_TEMPLATE = `
             ng-disabled="ctrl.isButtonDisabled()"
             ng-click="ctrl.downloadResultsAsJson()"
         >
-            <md-tooltip>{{ 'plugins.elevation.infoPanel.header.downloadButton.tooltip' | translate }}</md-tooltip>
+            <md-tooltip>{{ 'plugins.elevation.infoPanel.header.downloadBtn.tooltip' | translate }}</md-tooltip>
             <md-icon>
                 <svg xmlns="http://www.w3.org/2000/svg" fit height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 -1 24 24" focusable="false">
                     <g>

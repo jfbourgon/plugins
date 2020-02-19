@@ -39,6 +39,29 @@
     visibility: hidden;
   }
 
+  &.draggable {
+
+    &.is-dragging {
+      border: dashed 3px #aaa;
+      background-color: rgba(255,255,255,0.3) !important;
+      box-shadow: none !important;
+
+      .rv-header {
+        opacity: 0.1;
+      }
+
+      .panel-body {
+        opacity: 0.1;
+      }
+
+    }
+
+    .rv-header {
+      cursor: move;
+    }
+
+  }
+
   .panel-body {
     display: flex;
     flex-direction: column;
@@ -89,6 +112,10 @@
       margin: 10px 15px 15px 15px;
       background-color: #eee;
 
+      // &.hidden {
+      //   display: none;
+      // }
+
       &.disabled {
         opacity: 0.3;
       }
@@ -105,7 +132,9 @@
       align-items: center;
     }
 
-
+    #rv-elevation-retry-btn {
+      position: absolute;
+    }
 
   }
 
@@ -116,10 +145,10 @@
     bottom: initial;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 2px;
 
     .md-container {
-      height: 3px;
+      height: 2px;
     }
 
   }
@@ -149,6 +178,11 @@
   right: 0px !important;
   padding: 10px;
   bottom: 0px;
+
+  &::before {
+    background: rgba(0, 0, 0, 0.1) !important;
+  }
+
 }
 
 // HACK : this should be set in RV main stylesheet

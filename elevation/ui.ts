@@ -7,7 +7,10 @@ const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';
 
 export class UI {
 
+  public translations: any;
+
   private mapApi: any;
+  private config: any;
   private elevationService: any;
 
   private esriBundle: any;
@@ -16,50 +19,21 @@ export class UI {
   private identifyMode: any;
 
   private symbols: any;
-  // private graphicsLayer: any;
 
   private esriDrawToolbar: any;
   private $toolbar: any;
   private controls: any;
 
-  // private infoPanel: any;
-
-  // private activeToolName;
-
-  // const TRANSLATIONS = {
-
-  //   'en-CA': {
-  //       addPoint: 'Click to add a point',
-  //       complete: 'Double-click to finish',
-  //       finish: 'Double-click to finish',
-  //       freehand: 'Press down to start and let go to finish',
-  //       resume: 'Click to continue drawing',
-  //       start: 'Click to start drawing'
-  //   },
-  //   'fr-CA': {
-  //       addPoint: 'Cliquez pour ajouter un point',
-  //       complete: 'Double-cliquez pour terminer',
-  //       finish: 'Double-cliquez pour finir',
-  //       freehand: 'Appuyez pour commencer et laissez aller pour finir',
-  //       resume: 'Cliquez pour continuer à dessiner',
-  //       start: 'Cliquez pour commencer à dessiner'
-  //   }
-
-  // };
+  private initialDrawToolsStrings: any;
 
   constructor (mapApi: any, config: any, elevationService: any) {
 
     console.info('Elevation Toolbar constructor called...');
 
     this.mapApi = mapApi;
+    this.config = config;
     this.elevationService = elevationService;
 
-    // var closeBtn = infoPanel.header.closeButton;
-    // var toggleBtn = infoPanel.header.toggleButton;
-
-    // this.infoPanel = infoPanel;
-
-    // add needed dependencies
     let esriBundlePromise = (<any>RAMP).GAPI.esriLoadApiClasses([
       ['esri/toolbars/draw', 'esriTool'],
       ['esri/graphic', 'Graphic'],
@@ -76,7 +50,6 @@ export class UI {
 
     let that = this;
     let drawToolbar;
-    // let infoPanel;
 
     esriBundlePromise.then(esriBundle => {
 
@@ -87,12 +60,13 @@ export class UI {
 
     this.esriDrawToolbar = drawToolbar
 
-    // create graphics layer
     this.mapApi.layersObj.addLayer('graphicsRvElevation');
 
   }
 
   initToolbar(esriBundle, mapApi, config) {
+
+    this.initialDrawToolsStrings = esriBundle.i18n.toolbars.draw;
 
     $('.rv-mapnav-elevation-content').remove();
 
@@ -124,7 +98,6 @@ export class UI {
               createIcon: () => { (<any>that).createIcon(this.controls.profile) },
               selected: () => this.controls.profile.active,
               action: () => {
-                  // (<any>window).alert('profile');
                   setActiveTool('profile')
               }
           },
@@ -138,7 +111,6 @@ export class UI {
               createIcon: () => { (<any>that).createIcon(this.controls.statistics) },
               selected: () => this.controls.statistics.active,
               action: () => {
-                  // (<any>window).alert('statistics');
                   setActiveTool('statistics')
               }
           }
@@ -148,14 +120,8 @@ export class UI {
 
       });
 
-      // define on draw complete event
-      // let that = this;
-      // this.esriDrawToolbar.on('draw-complete', e => console.info(e));
       const addToMap = this.addToMap.bind(this);
       this.esriDrawToolbar.on('draw-complete', e => { that.handleDrawEnd(e); });
-
-
-      // return esriToolbar;
 
   }
 
@@ -182,16 +148,16 @@ export class UI {
     if (enable) {
 
       this.mode = name;
+
+      esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
+
       let esriToolNameToActivate = name === 'profile' ? 'polyline' : 'polygon';
 
       // activate the right tool from the ESRI draw toolbar
       this.esriDrawToolbar.activate(esriBundle.esriTool[esriToolNameToActivate.toUpperCase()], drawOptions);
 
-      // let drawLineSymbol = new esriBundle.SimpleLineSymbol(esriBundle.SimpleLineSymbol.STYLE_SHORTDASH, new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR), 2);
-      // let drawFillSymbol = new esriBundle.SimpleFillSymbol(esriBundle.SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, new esriBundle.Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR));
       this.esriDrawToolbar.setLineSymbol(this.symbols.line);
       this.esriDrawToolbar.setFillSymbol(this.symbols.polygon);
-      // this.activeToolName = name;
 
       this.identifyMode = mapApi.layersObj._identifyMode;
       mapApi.layersObj._identifyMode = [];
@@ -199,6 +165,9 @@ export class UI {
     } else {
 
       this.mode = null;
+
+      esriBundle.i18n.toolbars.draw = this.initialDrawToolsStrings;
+
       this.esriDrawToolbar.deactivate();
       mapApi.layersObj._identifyMode = this.identifyMode;
 
@@ -234,22 +203,8 @@ export class UI {
 
     let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.mode, null);
 
-    // this.infoPanel = infoPanel;
-
     infoPanel.show(geometry);
-
     infoPanel.panel.closing.subscribe(this.onHideInfoPanel.bind(this));
-    // infoPanel.panel.closing.subscribe(function(e) {
-
-    //   const { panel, code } = e;
-
-    //   panel.element.addClass('hidden');
-    //   $('.dialog-container').removeClass('rv-elevation-dialog-container');
-
-    //   panel.destroy();
-    //   this.clearGraphics();
-
-    // });
 
   }
 
@@ -281,11 +236,7 @@ export class UI {
 
     const { Graphic } = this.esriBundle;
 
-    // symbol.color = this.activeColor;
     let graphic = new Graphic(geometry, symbol);
-
-    // this.graphicKey = Math.random().toString(36).substr(2, 9);
-    // graphic.key = this.graphicKey;
 
     this.clearGraphics();
     this.graphicsLayer.add(graphic);
@@ -343,3 +294,49 @@ export class UI {
   }
 
 }
+
+UI.prototype.translations = {
+
+    'en-CA': {
+        drawTools: {
+          profile: {
+            // addPoint: 'Click to add a point',
+            complete: 'Double-click to complete the profile',
+            // finish: 'Double-click to finish',
+            // freehand: 'Press down to start and let go to finish',
+            resume: 'Click to add point to the profile',
+            start: 'Click to start drawing the profile'
+          },
+          statistics: {
+            // addPoint: 'Cliquer pour ajouter un point',
+            complete: 'Double-click to calculate statistics',
+            // finish: 'Double-cliquer pour finir',
+            // freehand: 'Appuyer pour commencer et laissez aller pour finir',
+            resume: 'Click to add point',
+            start: 'Click to start the zone'
+          }
+
+        }
+    },
+    'fr-CA': {
+      drawTools: {
+        profile: {
+          // addPoint: 'Cliquer pour ajouter un point',
+          complete: 'Double-cliquer pour générer le profil',
+          // finish: 'Double-cliquer pour finir',
+          // freehand: 'Appuyer pour commencer et laissez aller pour finir',
+          resume: 'Cliquer pour ajouter un point au profil',
+          start: 'Cliquer pour débuter le tracé du profil'
+        },
+        statistics: {
+          // addPoint: 'Cliquer pour ajouter un point',
+          complete: 'Double-cliquer pour calculer les statistiques',
+          // finish: 'Double-cliquer pour finir',
+          // freehand: 'Appuyer pour commencer et laissez aller pour finir',
+          resume: 'Cliquer pour ajouter un point',
+          start: 'Cliquer pour débuter la zone'
+        }
+      }
+    }
+
+  };

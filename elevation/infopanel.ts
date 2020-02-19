@@ -2,6 +2,8 @@
 import { stringify as toWKT } from 'wellknown';
 import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 
+const Draggabilly = require('draggabilly');
+
 const FileSaver = require('file-saver');
 var Chart = require('chart.js');
 
@@ -10,6 +12,8 @@ import { INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 const INFO_PANEL_ID = 'elevationInfoPanel';
 
 export default class InfoPanel {
+
+  public translations: any;
 
   private mapApi: any;
   private esriBundle: any;
@@ -50,24 +54,42 @@ export default class InfoPanel {
 
   }
 
-  show (geometry) {
+  getTranslatedText (id) {
 
-    console.warn(geometry);
+    const template = `<div>{{ '` + id + `' | translate }}</div>`;
+
+    let $el = $(template);
+    this.mapApi.$compile($el);
+
+    const text = $el.text();
+    return text;
+
+  }
+
+
+  show (geometry) {
 
     let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, geometry);
 
-    // parse ArcGIS JSON, convert it to GeoJSON
     const geojson = arcgisToGeoJSON(latLongGeometry);
     const wkt = toWKT(geojson);
 
     const panel = this.mapApi.panels.create(INFO_PANEL_ID, 1);
-    panel.header.title = 'Title';
+
+    let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
+    panel.header.title = this.getTranslatedText(titleId); //$title.text();
 
     const close = panel.header.closeButton;
     close.removeClass('primary');
     close.addClass('black md-ink-ripple');
 
     panel.element.addClass('ag-theme-material mobile-fullscreen tablet-fullscreen rv-elevation-dialog-hidden');
+
+    // Make panel draggable...
+    $(`#${INFO_PANEL_ID}`).addClass('draggable');
+    const draggable = new Draggabilly(`#${INFO_PANEL_ID}`, {
+      handle: '.rv-header'
+    });
 
     this.panel = panel;
 
@@ -84,7 +106,6 @@ export default class InfoPanel {
         const file = new Blob([data], { type: 'application/json' });
         FileSaver.saveAs(file, downloadFileName);
 
-        // console.warn(that.getResult());
       }
 
       this.isButtonDisabled = function() {
@@ -101,18 +122,18 @@ export default class InfoPanel {
       $scope.wkt = wkt;
 
       $scope.steps = [5, 10, 20, 50, 100];
-      $scope.stepFactor = 10;
+      $scope.stepFactor = 20;
       $scope.smoothProfile = true;
 
       $scope.result = null;
       that.setResult(null);
 
       $scope.isStatisticsTableVisible = function() {
-        return $scope.mode === 'statistics' && $scope.status === 'loaded'
+        return $scope.mode === 'statistics' && $scope.status !== 'error';
       }
 
       $scope.isProfileChartVisible = function() {
-        return $scope.mode === 'profile'; // && $scope.status === 'loaded'
+        return $scope.mode === 'profile' && $scope.status !== 'error';
       }
 
       $scope.refresh = function() {
@@ -143,51 +164,23 @@ export default class InfoPanel {
 
       $scope.updateChart = function() {
 
-        const { Point, SpatialReference, geometryEngine } = that.esriBundle;
-
-        let data = that.getResult().reduce((acc, point, index, array) => {
-
-          if (index === 0) {
-
-            acc.push({ x: 0, y: point.altitude, vertex: point.vertex })
-
-          } else {
-
-            const previousPoint = array[index - 1];
-            const previousDistance = acc[index - 1].x;
-
-            const { geometry: { coordinates: [ x1, y1 ] } } = previousPoint;
-            const { geometry: { coordinates: [ x2, y2 ] } } = point;
-
-            const projectedPoint1 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x1, y: y1 });
-            const projectedPoint2 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x2, y: y2});
-
-            const point1 = new Point(projectedPoint1.x, projectedPoint1.y, new SpatialReference(3978));
-            const point2 = new Point(projectedPoint2.x, projectedPoint2.y, new SpatialReference(3978));
-
-            const distance = geometryEngine.distance(point1, point2, 'kilometers');
-
-            acc.push({ x: previousDistance + distance, y: point.altitude, vertex: point.vertex });
-
-          }
-
-          return acc;
-
-        }, []);
-
+        let data = that.getResult();
 
         let chartLineData = data.map((item, i) => {
-          return { x: item.x, y: item.y };
+          return { x: (item.distance / 1000), y: item.altitude };
         })
 
         let chartPointData = data.map((item, i) => {
-          return item.vertex ? { x: item.x, y: item.y } : null;
+          return item.vertex ? { x: (item.distance / 1000), y: item.altitude } : null;
         }).filter(item => item ? true : false);
 
         let chartIntermediatePointData = data.map((item, i) => {
-          return item.vertex === false ? { x: item.x, y: item.y } : null;
+          return item.vertex === false ? { x: (item.distance / 1000), y: item.altitude } : null;
         }).filter(item => item ? true : false);
 
+        let chartNullElevationData = data.map((item, i) => {
+          return (item.vertex === true && item.altitude === null) ? { x: (item.distance / 1000), y: 0 } : null;
+        }).filter(item => item ? true : false);
 
         if ($scope.chart) {
 
@@ -197,8 +190,11 @@ export default class InfoPanel {
           $scope.chart.data.datasets[1].tension = $scope.smoothProfile ? 0.4 : 0;
           $scope.chart.data.datasets[1].data = chartIntermediatePointData;
 
-          $scope.chart.data.datasets[2].tension = $scope.smoothProfile ? 0.4 : 0;
-          $scope.chart.data.datasets[2].data = chartLineData;
+          // $scope.chart.data.datasets[2].tension = $scope.smoothProfile ? 0.4 : 0;
+          $scope.chart.data.datasets[2].data = chartNullElevationData;
+
+          $scope.chart.data.datasets[3].tension = $scope.smoothProfile ? 0.4 : 0;
+          $scope.chart.data.datasets[3].data = chartLineData;
 
           $scope.chart.options.scales.xAxes[0].ticks.suggestedMax = chartLineData[chartLineData.length - 1].x;
           // $scope.chart.options.scales.xAxes[0].ticks.stepSize = chartLineData.length - 1;
@@ -206,6 +202,10 @@ export default class InfoPanel {
           $scope.chart.update();
 
         } else {
+
+          // Very hacky way of getting translated strings from plugin translations
+          const xAxisLabel = $('#elevation-chart-x-axis-label').text();
+          const yAxisLabel = $('#elevation-chart-y-axis-label').text();
 
           Chart.defaults.global.animation = false;
           Chart.defaults.global.title = { display: false }
@@ -255,7 +255,7 @@ export default class InfoPanel {
                     display: true,
                     fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
                     fontSize: '14',
-                    labelString: 'Distance cumulée le long du profil (en kilomètres)'
+                    labelString: xAxisLabel //'Distance cumulée le long du profil (en kilomètres)'
                   },
                 }],
 
@@ -268,7 +268,7 @@ export default class InfoPanel {
                     display: true,
                     fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
                     fontSize: '14',
-                    labelString: 'Élévation (en mètres)'
+                    labelString: yAxisLabel //'Élévation (en mètres)'
                   }
                 }]
 
@@ -296,6 +296,17 @@ export default class InfoPanel {
                   data: chartIntermediatePointData
                 },
                 {
+                  tension: 0,
+                  fill: false,
+                  showLine: false,
+                  pointBackgroundColor: '#fff',
+                  pointRadius: 6,
+                  pointBorderColor: '#6A50A3',
+                  pointBorderWidth: 2,
+                  pointStyle: 'crossRot',
+                  data: chartNullElevationData
+                },
+                {
                   tension: $scope.smoothProfile ? 0.4 : 0,
                   pointRadius: 0,
                   pointHoverRadius: 0,
@@ -309,7 +320,7 @@ export default class InfoPanel {
 
         }
 
-        $scope.result = data;
+        // $scope.result = data;
 
       }
 
@@ -318,6 +329,8 @@ export default class InfoPanel {
       }
 
       $scope.doProfileRequest = function () {
+
+        const { Point, SpatialReference, geometryEngine } = that.esriBundle;
 
         let params = {
           path: $scope.wkt,
@@ -329,7 +342,37 @@ export default class InfoPanel {
           params: params
         }).then(function successCallback(response) {
 
-          let { data } = response;
+          let data = response.data.reduce((acc, point, index, array) => {
+
+            if (index === 0) {
+
+              // acc.push({ x: 0, y: point.altitude, vertex: point.vertex });
+              acc.push({ ...point, ...{ distance: 0 } });
+
+            } else {
+
+              const previousPoint = array[index - 1];
+              const previousDistance = acc[index - 1].distance;
+
+              const { geometry: { coordinates: [ x1, y1 ] } } = previousPoint;
+              const { geometry: { coordinates: [ x2, y2 ] } } = point;
+
+              const projectedPoint1 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x1, y: y1 });
+              const projectedPoint2 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x2, y: y2});
+
+              const point1 = new Point(projectedPoint1.x, projectedPoint1.y, new SpatialReference(3978));
+              const point2 = new Point(projectedPoint2.x, projectedPoint2.y, new SpatialReference(3978));
+
+              const distance = Math.round(geometryEngine.distance(point1, point2, 'meters'));
+
+              // acc.push({ x: previousDistance + distance, y: point.altitude, vertex: point.vertex });
+              acc.push({ ...point, ...{ distance: previousDistance + distance } });
+
+            }
+
+            return acc;
+
+          }, []);
 
           $scope.status = 'loaded';
 
@@ -396,10 +439,6 @@ export default class InfoPanel {
       $('#elevationInfoPanel').removeClass('rv-elevation-dialog-hidden');
 
     }, 10);
-
-  }
-
-  hide () {
 
   }
 

@@ -41,13 +41,10 @@ export default class ElevationServicePlugin {
     let config = this._RV.getConfig('plugins').elevation;
     config.language = this._RV.getCurrentLang();
 
-    // if (!this.toolbar) {
-      console.info('Initializing UI...');
-      this.ui = new UI(mapApi, config, null);
-    // }
+    this.ui = new UI(mapApi, config, null);
 
     this.pluginButton = mapApi.mapI.addPluginButton(
-      ElevationServicePlugin.prototype.translations[config.language].pluginButton,
+      ElevationServicePlugin.prototype.translations[config.language].pluginName,
       this.togglePluginState.bind(this)
     );
 
@@ -71,7 +68,7 @@ export default interface ElevationServiceInterface {
 
 ElevationServicePlugin.prototype.translations = {
   'en-CA': {
-    pluginButton: 'Elevation Service',
+    pluginName: 'Elevation Service',
     toolbar: {
       profile: {
         label: 'Elevation Profile',
@@ -83,13 +80,28 @@ ElevationServicePlugin.prototype.translations = {
       }
     },
     infoPanel: {
+      title: {
+        profile: 'Elevation Profile',
+        statistics: 'Elevation Statistics',
+      },
       header: {
         downloadBtn: {
           tooltip: 'Download as JSON'
         }
       },
       stepMenuBtn: {
-        tooltip: 'Number of steps'
+        tooltip: 'Number of interpolated points'
+      },
+      smoothProfileBtn: {
+        label: 'Smooth Profile'
+      },
+      retryBtn: {
+        label: 'Try again'
+      },
+      chart: {
+        label: 'Elevation Profile',
+        xAxisLabel: 'Cumulative distance along profile (kilometers)',
+        yAxisLabel: 'Elevation (meters)'
       }
     }
 
@@ -106,7 +118,7 @@ ElevationServicePlugin.prototype.translations = {
       // }
   },
   'fr-CA': {
-    pluginButton: 'Service d\'élévation',
+    pluginName: 'Service d\'élévation',
     toolbar: {
       profile: {
         label: 'Profil d\'élévation',
@@ -118,13 +130,28 @@ ElevationServicePlugin.prototype.translations = {
       }
     },
     infoPanel: {
+      title: {
+        profile: 'Profil d\'élévation',
+        statistics: 'Statistiques d\'élévation',
+      },
       header: {
-        downloadButton: {
+        downloadBtn: {
           tooltip: 'Télécharger en format JSON'
         }
       },
       stepMenuBtn: {
         tooltip: 'Nombre de points à interpoler'
+      },
+      smoothProfileBtn: {
+        label: 'Arrondir le tracé'
+      },
+      retryBtn: {
+        label: 'Essayer à nouveau'
+      },
+      chart: {
+        label: 'Profil d\'élévation',
+        xAxisLabel: 'Distance cumulée le long du profil (en kilomètres)',
+        yAxisLabel: 'Élévation (en mètres)'
       }
     }
 
