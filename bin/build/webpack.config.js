@@ -22,6 +22,10 @@ module.exports = function(env = {}) {
 
         entry: {},
 
+        externals: {
+            moment: 'moment'
+        },
+
         output: {
             path: path.join(SOURCE_PATH, './dist'),
             filename: './[name]/[name].js'
