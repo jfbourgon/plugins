@@ -58,6 +58,11 @@
 
     .rv-header {
       cursor: move;
+
+      header {
+        padding-left: 8px;
+      }
+
     }
 
   }
@@ -66,19 +71,25 @@
     display: flex;
     flex-direction: column;
     position: relative;
+    // padding: 0 !important;
+    margin-right: 13px !important;
+    overflow-y: hidden;
   }
 
   .body {
     display: flex;
     flex: 1;
     flex-direction: column;
+    overflow-y: hidden;
   }
 
   .toolbar {
+
     display: flex;
     flex: 0;
     flex-direction: row;
-    padding-top: 10px;
+    // padding-top: 10px;
+    padding: 10px 0px 8px !important;
     // border: solid 1px red;
 
     md-switch {
@@ -97,24 +108,20 @@
   }
 
   .content {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
+
     // border: solid 1px blue;
     justify-content: center;
     align-items: center;
+    // padding: 0 8px 8px !important;
+    display: flex;
+    flex: 1;
 
     .rv-elevation-infopanel-chart {
+
       align-self: stretch;
       flex: 1;
-      /* width: 100%; */
-      /* height: 100%; */
-      margin: 10px 15px 15px 15px;
+      margin: 0px 4px 15px 15px;
       background-color: #eee;
-
-      // &.hidden {
-      //   display: none;
-      // }
 
       &.disabled {
         opacity: 0.3;
@@ -123,13 +130,68 @@
     }
 
     .rv-elevation-infopanel-statistics-table {
+
       flex: 1;
-      display: flex;
-      /* width: 100%; */
-      /* height: 100%; */
-      margin: 15px;
+      align-self: stretch;
+      margin: 0px 4px 15px 15px;
       justify-content: center;
       align-items: center;
+
+      &.disabled {
+        opacity: 0.3;
+      }
+
+      table.md-table {
+
+        margin-bottom: 18px;
+        background-color: #eee;
+
+        thead.md-head {
+
+          background-color: rgba(217,205,229, 0.5);
+
+          tr.md-row {
+            height: 40px;
+          }
+
+          th.md-column {
+            color: #6A50A3;
+            border-bottom: solid 1px #6A50A3;
+
+            &:first-child {
+              padding: 0 18px
+            }
+
+            &:last-child {
+              padding: 0 18px 0 0
+            }
+          }
+
+        }
+
+        tbody.md-body {
+
+          tr.md-row {
+            height: 36px;
+          }
+
+          td.md-cell {
+            // color: #6A50A3;
+            border-top: none !important;
+
+            &:first-child {
+              padding: 0 18px
+            }
+
+            &:last-child {
+              padding: 0 18px 0 0
+            }
+          }
+
+        }
+
+      }
+
     }
 
     #rv-elevation-retry-btn {
@@ -165,6 +227,15 @@
 
 }
 
+.rv-elevation-stats-source-menu {
+
+  // min-width: 240px !important;
+
+  .md-button md-icon {
+    margin: auto;
+  }
+
+}
 
 .rv-elevation-dialog-container {
   position: absolute;

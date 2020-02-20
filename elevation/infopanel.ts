@@ -2,12 +2,32 @@
 import { stringify as toWKT } from 'wellknown';
 import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 
+const STATISTICS = {
+	elevation:{
+		min: -0.14,
+		max: 43.22,
+		mean: 24.01,
+	},
+	slope:{
+		min: 0,
+		max: 76.52,
+		mean: 3.31
+	},
+	aspect:{
+		north: 0.10,
+		south: 0.25,
+		west: 0.43,
+		east: 0.18,
+		flat: 0.04
+	}
+};
+
 const Draggabilly = require('draggabilly');
 
 const FileSaver = require('file-saver');
 var Chart = require('chart.js');
 
-import { INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
+import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
 const INFO_PANEL_ID = 'elevationInfoPanel';
 
@@ -23,6 +43,7 @@ export default class InfoPanel {
   public panel: any;
 
   private result: any;
+  private isDirty: any;
 
   constructor (mapApi: any, esriBundle: any, mode: any, options: any) {
 
@@ -66,28 +87,42 @@ export default class InfoPanel {
 
   }
 
+  updateGeometry (geometry) {
+
+    const ctrl = (<any>window).angular.element(document.getElementById('elevation-rv-info-panel'));
+    const scope = ctrl.scope();
+
+    scope.setGeometry(geometry);
+
+  }
 
   show (geometry) {
 
-    let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, geometry);
-
-    const geojson = arcgisToGeoJSON(latLongGeometry);
-    const wkt = toWKT(geojson);
-
-    const panel = this.mapApi.panels.create(INFO_PANEL_ID, 1);
+    const panel = this.mapApi.panels.create(INFO_PANEL_ID);
 
     let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
     panel.header.title = this.getTranslatedText(titleId); //$title.text();
 
     const close = panel.header.closeButton;
+    // const toggle = panel.header.toggleButton;
+
+    panel.allowOffscreen = true;
+
     close.removeClass('primary');
     close.addClass('black md-ink-ripple');
 
     panel.element.addClass('ag-theme-material mobile-fullscreen tablet-fullscreen rv-elevation-dialog-hidden');
 
+    panel.element.css({
+      top: '50%',
+      left: '50%',
+      marginLeft: '-350px',
+      marginTop: '-250px'
+    });
+
     // Make panel draggable...
-    $(`#${INFO_PANEL_ID}`).addClass('draggable');
-    const draggable = new Draggabilly(`#${INFO_PANEL_ID}`, {
+    panel.element.addClass('draggable');
+    const draggable = new Draggabilly(panel.element.get(0), {
       handle: '.rv-header'
     });
 
@@ -119,14 +154,20 @@ export default class InfoPanel {
       $scope.mode = that.mode;
 
       $scope.status = 'loading';
-      $scope.wkt = wkt;
+      $scope.geometry = geometry;
 
       $scope.steps = [5, 10, 20, 50, 100];
       $scope.stepFactor = 20;
       $scope.smoothProfile = true;
 
+      $scope.statsSources = ['cdem', 'cdsm'];
+      $scope.statsSource = 'cdem';
+
+      $scope.mapZoomLevel = 1;
+
       $scope.result = null;
-      that.setResult(null);
+      $scope.isDirty = false;
+      // that.setResult(null);
 
       $scope.isStatisticsTableVisible = function() {
         return $scope.mode === 'statistics' && $scope.status !== 'error';
@@ -136,6 +177,15 @@ export default class InfoPanel {
         return $scope.mode === 'profile' && $scope.status !== 'error';
       }
 
+      $scope.setGeometry = function(geometry) {
+        $scope.isDirty = true;
+        $scope.geometry = geometry;
+      }
+
+      // $scope.isDirty = function() {
+      //   return that.isDirty;
+      // }
+
       $scope.refresh = function() {
         $scope.doRequest();
       }
@@ -143,6 +193,7 @@ export default class InfoPanel {
       $scope.doRequest = function() {
 
         that.setResult(null);
+
         $scope.status = 'loading';
 
         if ($scope.mode === 'profile') {
@@ -150,7 +201,11 @@ export default class InfoPanel {
         } else {
           $scope.doStatisticsRequest();
         }
+
+        $scope.isDirty = false;
+
       }
+
 
       $scope.handleSmoothChange = function() {
         $scope.smoothProfile = !$scope.smoothProfile;
@@ -158,8 +213,25 @@ export default class InfoPanel {
       }
 
       $scope.handleStepChange = function(stepFactor) {
+
+        if ($scope.stepFactor == stepFactor) {
+          return;
+        }
+
         $scope.stepFactor = stepFactor;
         $scope.doRequest();
+
+      }
+
+      $scope.handleStatsSourceChange = function(statsSource) {
+
+        if ($scope.statsSource == statsSource) {
+          return;
+        }
+
+        $scope.statsSource = statsSource;
+        $scope.doRequest();
+
       }
 
       $scope.updateChart = function() {
@@ -283,7 +355,7 @@ export default class InfoPanel {
                   fill: false,
                   showLine: false,
                   pointBackgroundColor: '#6A50A3',
-                  pointRadius: 4,
+                  pointRadius: 5,
                   data: chartPointData
                 },
                 {
@@ -324,7 +396,8 @@ export default class InfoPanel {
 
       }
 
-      $scope.updateStatisticsTable = function(data) {
+      $scope.updateStatisticsTable = function() {
+        let data = that.getResult();
         $scope.result = data;
       }
 
@@ -332,21 +405,27 @@ export default class InfoPanel {
 
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
 
+        let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, geometry);
+
+        const geojson = arcgisToGeoJSON(latLongGeometry);
+        const wkt = toWKT(geojson);
+
         let params = {
-          path: $scope.wkt,
+          path: wkt,
           steps: $scope.stepFactor
         };
 
         $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
+
           // withCredentials : true,
           params: params
+
         }).then(function successCallback(response) {
 
           let data = response.data.reduce((acc, point, index, array) => {
 
             if (index === 0) {
 
-              // acc.push({ x: 0, y: point.altitude, vertex: point.vertex });
               acc.push({ ...point, ...{ distance: 0 } });
 
             } else {
@@ -376,7 +455,7 @@ export default class InfoPanel {
 
           $scope.status = 'loaded';
 
-          $scope.result = data;
+          // $scope.result = data;
           that.setResult(data);
           $scope.updateChart();
 
@@ -388,25 +467,36 @@ export default class InfoPanel {
 
       $scope.doStatisticsRequest = function () {
 
+        let geom = $scope.geometry;
+
+        let params = {
+          geom: null,
+          level: $scope.mapZoomLevel,
+          type: $scope.statsSource
+        };
+
         $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
+
           // withCredentials : true,
+          params: params
+
         }).then(function successCallback(response) {
 
           let { data } = response;
 
           $scope.status = 'loaded';
 
-          $scope.result = data;
+          // $scope.result = data;
           that.setResult(data);
-          $scope.updateStatisticsTable(data);
+          $scope.updateStatisticsTable();
 
         }, function errorCallback(response) {
 
           $scope.status = 'loaded';
 
-          $scope.result = response;
-          that.setResult(response);
-          $scope.updateStatisticsTable(response);
+          // $scope.result = response;
+          that.setResult(STATISTICS);
+          $scope.updateStatisticsTable();
 
         });
 
@@ -421,7 +511,7 @@ export default class InfoPanel {
     this.mapApi.$compile(downloadButtonTemplate)
     panel.header.prepend(downloadButtonTemplate);
 
-    let infoPanelTemplate = $(INFO_PANEL_TEMPLATE);
+    let infoPanelTemplate = this.mode === 'profile' ? $(PROFILE_INFO_PANEL_TEMPLATE) : $(STATISTICS_INFO_PANEL_TEMPLATE);
     this.mapApi.$compile(infoPanelTemplate);
     panel.body.empty();
     panel.body.prepend(infoPanelTemplate);

@@ -11,7 +11,7 @@ export class UI {
 
   private mapApi: any;
   private config: any;
-  private elevationService: any;
+  // private elevationService: any;
 
   private esriBundle: any;
 
@@ -21,21 +21,28 @@ export class UI {
   private symbols: any;
 
   private esriDrawToolbar: any;
+  private esriEditToolbar: any;
   private $toolbar: any;
   private controls: any;
 
+  private infoPanel: any;
+
+  private activeGraphic: any;
+
   private initialDrawToolsStrings: any;
 
-  constructor (mapApi: any, config: any, elevationService: any) {
+  constructor (mapApi: any, config: any) {
 
     console.info('Elevation Toolbar constructor called...');
 
     this.mapApi = mapApi;
     this.config = config;
-    this.elevationService = elevationService;
+    this.activeGraphic = null;
+    // this.elevationService = elevationService;
 
     let esriBundlePromise = (<any>RAMP).GAPI.esriLoadApiClasses([
-      ['esri/toolbars/draw', 'esriTool'],
+      ['esri/toolbars/draw', 'drawToolbar'],
+      ['esri/toolbars/edit', 'editToolbar'],
       ['esri/graphic', 'Graphic'],
       ['esri/Color', 'Color'],
       ['esri/symbols/SimpleMarkerSymbol', 'SimpleMarkerSymbol'],
@@ -50,27 +57,29 @@ export class UI {
 
     let that = this;
     let drawToolbar;
+    let editToolbar;
 
     esriBundlePromise.then(esriBundle => {
 
-      drawToolbar = that.initToolbar(esriBundle, mapApi, config);
+      that.initToolbars(esriBundle, mapApi, config);
       this.esriBundle = esriBundle;
 
     });
 
-    this.esriDrawToolbar = drawToolbar
+    // this.esriDrawToolbar = drawToolbar
 
     this.mapApi.layersObj.addLayer('graphicsRvElevation');
 
   }
 
-  initToolbar(esriBundle, mapApi, config) {
+  initToolbars(esriBundle, mapApi, config) {
 
     this.initialDrawToolsStrings = esriBundle.i18n.toolbars.draw;
 
     $('.rv-mapnav-elevation-content').remove();
 
-    this.esriDrawToolbar = new esriBundle.esriTool(mapApi.esriMap);
+    this.esriDrawToolbar = new esriBundle.drawToolbar(mapApi.esriMap);
+    this.esriEditToolbar = new esriBundle.editToolbar(mapApi.esriMap);
 
     let drawLineSymbol = new esriBundle.SimpleLineSymbol(esriBundle.SimpleLineSymbol.STYLE_SHORTDASH, new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR), 2);
     let drawFillSymbol = new esriBundle.SimpleFillSymbol(esriBundle.SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, new esriBundle.Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR));
@@ -84,16 +93,34 @@ export class UI {
 
     let that = this;
     let setActiveTool = this.setActiveTool.bind(this);
+    let getActiveGraphic = this.getActiveGraphic.bind(this);
 
     mapApi.agControllerRegister('ElevationToolbarCtrl', function () {
 
         this.controls = {
+          edit: {
+            name: 'edit',
+            label: 'plugins.elevation.toolbar.edit.label',
+            icon: 'M3.5,18.5L9.5,12.5L13.5,16.5L22,6.92L20.59,5.5L13.5,13.5L9.5,9.5L2,17L3.5,18.5Z',
+            tooltip: 'plugins.elevation.toolbar.edit.tooltip',
+            active: false,
+            viewbox: '0 0 24 24',
+            createIcon: () => { (<any>that).createIcon(this.controls.edit) },
+            visible: () => false, //getActiveGraphic() !== null,
+            disabled: () => false,
+            selected: () => this.controls.edit.active,
+            action: () => {
+                setActiveTool('edit')
+            }
+        },
           profile: {
               name: 'profile',
               label: 'plugins.elevation.toolbar.profile.label',
               icon: 'M3.5,18.5L9.5,12.5L13.5,16.5L22,6.92L20.59,5.5L13.5,13.5L9.5,9.5L2,17L3.5,18.5Z',
               tooltip: 'plugins.elevation.toolbar.profile.tooltip',
               active: false,
+              visible: () => true,
+              disabled: () => this.controls.edit.active,
               viewbox: '0 0 24 24',
               createIcon: () => { (<any>that).createIcon(this.controls.profile) },
               selected: () => this.controls.profile.active,
@@ -107,6 +134,8 @@ export class UI {
               icon: 'M3,21V17.29L10.78,12.8L14.55,15L21,11.25V21H3M21,8.94L14.55,12.67L10.78,10.5L3,15V12.79L10.78,8.3L14.55,10.5L21,6.75V8.94Z',
               tooltip: 'plugins.elevation.toolbar.statistics.tooltip',
               active: false,
+              visible: () => true,
+              disabled: () => this.controls.edit.active,
               viewbox: '0 2 24 24',
               createIcon: () => { (<any>that).createIcon(this.controls.statistics) },
               selected: () => this.controls.statistics.active,
@@ -121,8 +150,31 @@ export class UI {
       });
 
       const addToMap = this.addToMap.bind(this);
+      this.esriEditToolbar.on('vertex-move-stop', e => { that.handleEditEnd(e); });
       this.esriDrawToolbar.on('draw-complete', e => { that.handleDrawEnd(e); });
 
+  }
+
+  clearActiveTool() {
+
+    let { controls, esriBundle, mapApi } = this;
+
+    this.mode = null;
+    // this.clearGraphics();
+
+    Object.keys(controls).forEach(k => controls[k].active = false);
+
+    esriBundle.i18n.toolbars.draw = this.initialDrawToolsStrings;
+
+    this.esriDrawToolbar.deactivate();
+    this.esriEditToolbar.deactivate();
+
+    mapApi.layersObj._identifyMode = this.identifyMode;
+
+  }
+
+  getActiveGraphic() {
+    return this.activeGraphic;
   }
 
   setActiveTool(name) {
@@ -139,41 +191,67 @@ export class UI {
       tooltipOffset: 20
     }
 
-    this.clearGraphics();
+    const vertexSymbol = new esriBundle.SimpleMarkerSymbol(
+      esriBundle.SimpleMarkerSymbol.STYLE_CIRCLE,
+      8,
+      new esriBundle.SimpleLineSymbol(
+        esriBundle.SimpleLineSymbol.STYLE_SOLID,
+        new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR),
+        1
+      ),
+      new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR)
+    );
 
-    const enable = !controls[name].active;
+    let editOptions = {
+      vertexSymbol: vertexSymbol
+    };
 
-    Object.keys(controls).forEach(k => controls[k].active = false);
+    const enable = name !== this.mode;
 
     if (enable) {
 
       this.mode = name;
 
-      esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
+      if (name === 'edit') {
 
-      let esriToolNameToActivate = name === 'profile' ? 'polyline' : 'polygon';
+        this.esriDrawToolbar.deactivate();
+        this.esriEditToolbar.activate(esriBundle.editToolbar.EDIT_VERTICES, this.activeGraphic, editOptions);
 
-      // activate the right tool from the ESRI draw toolbar
-      this.esriDrawToolbar.activate(esriBundle.esriTool[esriToolNameToActivate.toUpperCase()], drawOptions);
+      } else {
 
-      this.esriDrawToolbar.setLineSymbol(this.symbols.line);
-      this.esriDrawToolbar.setFillSymbol(this.symbols.polygon);
+        this.clearGraphics();
+
+        this.esriEditToolbar.deactivate();
+
+        esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
+
+        let esriToolNameToActivate = name === 'profile' ? 'polyline' : 'polygon';
+
+        // activate the right tool from the ESRI draw toolbar
+        this.esriDrawToolbar.activate(esriBundle.drawToolbar[esriToolNameToActivate.toUpperCase()], drawOptions);
+
+        this.esriDrawToolbar.setLineSymbol(this.symbols.line);
+        this.esriDrawToolbar.setFillSymbol(this.symbols.polygon);
+
+      }
+
+      Object.keys(controls).forEach(k => controls[k].active = false);
+      controls[name].active = true;
 
       this.identifyMode = mapApi.layersObj._identifyMode;
       mapApi.layersObj._identifyMode = [];
 
     } else {
 
-      this.mode = null;
+      if (name === 'edit') {
 
-      esriBundle.i18n.toolbars.draw = this.initialDrawToolsStrings;
+        this.esriEditToolbar.deactivate();
 
-      this.esriDrawToolbar.deactivate();
-      mapApi.layersObj._identifyMode = this.identifyMode;
+      }
+
+      this.clearActiveTool();
 
     }
-
-    controls[name].active = enable;
 
   }
 
@@ -196,15 +274,21 @@ export class UI {
 
     panel.destroy();
     this.clearGraphics();
+    this.clearActiveTool();
+    // this.setActiveTool('edit');
 
   }
 
-  showInfoPanel(geometry) {
+  showInfoPanel(geometry, mode = null) {
 
-    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.mode, null);
+    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, mode || this.mode, null);
+
+    // this.setActiveTool('edit');
 
     infoPanel.show(geometry);
     infoPanel.panel.closing.subscribe(this.onHideInfoPanel.bind(this));
+
+    this.infoPanel = infoPanel;
 
   }
 
@@ -214,6 +298,16 @@ export class UI {
     this.addToMap(geometry);
 
     this.showInfoPanel(geometry);
+
+    this.setActiveTool('edit');
+
+  }
+
+  handleEditEnd(e) {
+
+    let { graphic: { geometry }, ...rest } = e;
+    // console.debug(rest);
+    this.infoPanel.updateGeometry(geometry);
 
   }
 
@@ -239,11 +333,14 @@ export class UI {
     let graphic = new Graphic(geometry, symbol);
 
     this.clearGraphics();
+
+    this.activeGraphic = graphic;
     this.graphicsLayer.add(graphic);
 
   }
 
   clearGraphics() {
+    this.activeGraphic = null;
     this.graphicsLayer.clear();
   }
 
@@ -267,7 +364,7 @@ export class UI {
     let infoPanel = this.mapApi.panels.getById(INFO_PANEL_ID);
 
     if (infoPanel) {
-      infoPanel.hide();
+      // infoPanel.hide();
       infoPanel.destroy();
     }
 

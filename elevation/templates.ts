@@ -1,11 +1,15 @@
 // panels templates: collaboration
 export const TOOLBAR_TEMPLATE = `
     <div class="rv-button-group hover rv-whiteframe-z2 rv-mapnav-elevation-content hidden" ng-controller="ElevationToolbarCtrl as ctrl">
+        <!-- <md-button class="md-warn md-raised" style="position: absolute; right: 35px; top: -7px;">Stop Editing</md-button> -->
         <md-button ng-repeat-start="control in ctrl.controls" name="{{ controls }}"
             aria-label="{{ control.label | translate }}"
             class="md-icon-button rv-button-32 rv-icon-16 rv-elevation-button rv-draw-{{ control.name }}-button"
             ng-class="{ 'rv-control-active': control.selected() }"
-            ng-click="control.action($event)">
+            ng-click="control.action($event)"
+            ng-disabled="control.disabled()"
+            ng-if="control.visible()"
+            >
             <md-tooltip md-direction="left">{{ control.tooltip | translate }}</md-tooltip>
             <md-icon>
                 <svg xmlns="http://www.w3.org/2000/svg" fit height="100%" width="100%" preserveAspectRatio="xMidYMid meet" ng-attr-view_box="{{control.viewbox}}" focusable="false">
@@ -14,18 +18,18 @@ export const TOOLBAR_TEMPLATE = `
         </md-button>
         <!-- this will insert divider after every element except the last one -->
         <md-divider ng-if="!$last" ng-repeat-end></md-divider>
-    </div>
+    </md-but>
     <span class="rv-spacer"></span>
 `;
 
-export const INFO_PANEL_TEMPLATE = ` 
-    <div ng-controller="InfoPanelCtrl" class="body">
+export const PROFILE_INFO_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-panel" ng-controller="InfoPanelCtrl" class="body">
 
         <div class="toolbar">
 
             <md-menu-bar class="menubar">
 
-                <md-menu md-position-mode="target-left target" ng-if="mode === 'profile'">
+                <md-menu md-position-mode="target-left target">
                     <md-button
                         aria-label="Menu"
                         ng-disabled="status === 'loading'"
@@ -62,10 +66,6 @@ export const INFO_PANEL_TEMPLATE = ` 
 
         <div class="content">
 
-            <div ng-if="isStatisticsTableVisible()" class="rv-elevation-infopanel-statistics-table">
-                <div>STATISTICS TABLE</div>
-            </div>
-
             <div class="rv-elevation-infopanel-chart" ng-class="{ 'disabled': status === 'loading', 'hidden': !isProfileChartVisible()}">
                 <canvas id="rv-elevation-chart" style="width: 100%; height: 100%;" role="img" aria-label="{{ 'plugins.elevation.infoPanel.chart.label' | translate }}">
                     <p>{{ 'plugins.elevation.infoPanel.chart.label' | translate }}</p>
@@ -75,6 +75,150 @@ export const INFO_PANEL_TEMPLATE = ` 
             </div>
 
             <md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>
+            <md-button id="rv-elevation-retry-btn" class="md-raised" ng-click="refresh()" ng-if="isDirty">{{ 'plugins.elevation.infoPanel.refreshBtn.label' | translate }}</md-button>
+
+        </div>
+
+        <md-progress-linear md-mode="indeterminate" ng-disabled="status !== 'loading'"></md-progress-linear>
+
+    </div>
+`;
+
+export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-panel" ng-controller="InfoPanelCtrl" class="body">
+
+        <div class="toolbar">
+
+            <md-menu-bar class="menubar">
+
+                <md-menu md-position-mode="target-left target">
+                    <md-button
+                        aria-label="Menu"
+                        ng-disabled="status === 'loading'"
+                        class="md-icon-button black"
+                        ng-click="$mdOpenMenu($event)">
+                        <md-icon>
+                            <svg xmlns="http://www.w3.org/2000/svg" fit height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" focusable="false">
+                            <g><path d="M0,0h24v24H0V0z" fill="none"/><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></g>
+                            </svg>
+                        </md-icon>
+                        <md-tooltip>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate }}</md-tooltip>
+                    </md-button>
+                    <md-menu-content class="rv-menu rv-dense rv-elevation-stats-source-menu">
+                        <md-menu-item ng-disabled={true}>
+                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.7rem; color: #aaa;'>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate | uppercase }}</span>
+                        </md-menu-item>
+                        <md-menu-divider class="rv-lg"></md-menu-divider>
+                        <md-menu-item>
+                            <md-button ng-click="handleStatsSourceChange('cdem')">
+                                <span style='flex-basis: auto; overflow-wrap:normal;'>{{ 'plugins.elevation.infoPanel.statsSource.cdem' | translate }}</span>
+                                <md-icon md-svg-icon="action:done" ng-if="'cdem' === statsSource"></md-icon>
+                            </md-button>
+                        </md-menu-item>
+                        <md-menu-item>
+                        <md-button ng-click="handleStatsSourceChange('cdsm')">
+                            <span style='flex-basis: auto; overflow-wrap:normal;'>{{ 'plugins.elevation.infoPanel.statsSource.cdsm' | translate }}</span>
+                            <md-icon md-svg-icon="action:done" ng-if="'cdsm' === statsSource"></md-icon>
+                        </md-button>
+                    </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+
+            </md-menu-bar>
+
+        </div>
+
+        <div class="content" style="overflow-y: auto;">
+
+            <div class="rv-elevation-infopanel-statistics-table" ng-class="{ 'disabled': status === 'loading', 'hidden': !isStatisticsTableVisible()}">
+
+                <table class="md-table">
+                    <thead class="md-head">
+                        <tr class="md-row">
+                            <th class="md-column">
+                                <span>{{ 'plugins.elevation.infoPanel.stats.elevation.label' | translate }}</span>
+                            </th>
+                            <th class="md-column md-numeric">
+                            <span>{{ 'plugins.elevation.infoPanel.stats.elevation.unit' | translate }}</span>
+                        </th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-body">
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.min' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.elevation.min}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.max' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.elevation.max}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.mean' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.elevation.mean}}</td>
+                        </tr>
+                    </tbody>
+                    <thead class="md-head">
+                        <tr class="md-row">
+                            <th class="md-column">
+                                <span>{{ 'plugins.elevation.infoPanel.stats.slope.label' | translate }}</span>
+                            </th>
+                            <th class="md-column md-numeric">
+                                <span>{{ 'plugins.elevation.infoPanel.stats.slope.unit' | translate }}</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-body">
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.min' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.slope.min}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.max' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.slope.max}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.mean' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.slope.mean}}</td>
+                        </tr>
+                    </tbody>
+                    <thead class="md-head">
+                        <tr class="md-row">
+                            <th class="md-column">
+                                <span>{{ 'plugins.elevation.infoPanel.stats.aspect.label' | translate }}</span>
+                            </th>
+                            <th class="md-column md-numeric">
+                                <span>{{ 'plugins.elevation.infoPanel.stats.aspect.unit' | translate }}</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="md-body">
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.north' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.aspect.north}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.south' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.aspect.south}}</td>
+                        </tr>
+                        <tr class="md-row">
+                            <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.west' | translate }}</td>
+                            <td class="md-cell md-numeric">{{result.aspect.west}}</td>
+                        </tr>
+                        <tr class="md-row">
+                        <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.east' | translate }}</td>
+                        <td class="md-cell md-numeric">{{result.aspect.east}}</td>
+                    </tr>
+                    <tr class="md-row">
+                    <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.flat' | translate }}</td>
+                    <td class="md-cell md-numeric">{{result.aspect.flat}}</td>
+                </tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+            <md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>
+            <md-button id="rv-elevation-retry-btn" class="md-raised" ng-click="refresh()" ng-if="isDirty">{{ 'plugins.elevation.infoPanel.refreshBtn.label' | translate }}</md-button>
 
         </div>
 
