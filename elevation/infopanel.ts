@@ -434,7 +434,7 @@ export default class InfoPanel {
 
         $http.get('https://geogratis.gc.ca/services/elevation/cdem/profile', {
 
-          withCredentials : true,
+          // withCredentials : true,
           params: params
 
         }).then(function successCallback(response) {
