@@ -421,7 +421,7 @@ export default class InfoPanel {
           steps: $scope.stepFactor
         };
 
-        $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
+        $http.get('https://geogratis.gc.ca/services/elevation/cdem/profile', {
 
           withCredentials : true,
           params: params
@@ -481,7 +481,7 @@ export default class InfoPanel {
           type: $scope.statsSource
         };
 
-        $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
+        $http.get('https://geogratis.gc.ca/services/elevation/cdem/profile', {
 
           withCredentials : true,
           params: params
