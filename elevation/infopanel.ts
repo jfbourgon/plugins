@@ -2,10 +2,34 @@
 import { stringify as toWKT } from 'wellknown';
 import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 
+const numeral = require('numeral');
+
+// Create fake locale to format number (always as ISO, regardless of user's locale)
+numeral.register('locale', 'iso', {
+  delimiters: {
+      thousands: ' ',
+      decimal: ','
+  }
+  // abbreviations: {
+  //     thousand: 'k',
+  //     million: 'm',
+  //     billion: 'b',
+  //     trillion: 't'
+  // },
+  // ordinal : function (number) {
+  //     return number === 1 ? 'er' : 'ème';
+  // },
+  // currency: {
+  //     symbol: '€'
+  // }
+});
+
+numeral.locale('iso');
+
 const STATISTICS = {
 	elevation:{
 		min: -0.14,
-		max: 43.22,
+		max: 4300.22,
 		mean: 24.01,
 	},
 	slope:{
@@ -165,6 +189,7 @@ export default class InfoPanel {
 
     this.mapApi.agControllerRegister('InfoPanelCtrl', ['$scope','$http', function($scope, $http) {
 
+
       $scope.mode = that.mode;
 
       $scope.status = 'loading';
@@ -182,6 +207,10 @@ export default class InfoPanel {
       $scope.result = null;
       $scope.isDirty = false;
       // that.setResult(null);
+
+      $scope.getFormattedValue = function(value, format = '0,0.0') {
+        return numeral(value).format(format);
+      }
 
       $scope.isStatisticsTableVisible = function() {
         return $scope.mode === 'statistics' && $scope.status !== 'error';
@@ -427,12 +456,14 @@ export default class InfoPanel {
         const geojson = arcgisToGeoJSON(latLongGeometry);
         const wkt = toWKT(geojson);
 
+        const url = `https://geogratis.gc.ca/services/elevation/${$scope.statsSource}/profile`;
+
         let params = {
           path: wkt,
           steps: $scope.stepFactor
         };
 
-        $http.get('https://geogratis.gc.ca/services/elevation/cdem/profile', {
+        $http.get(url, {
 
           // withCredentials : true,
           params: params

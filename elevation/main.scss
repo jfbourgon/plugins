@@ -60,7 +60,7 @@
       cursor: move;
 
       header {
-        padding-left: 8px;
+        padding-left: 12px;
       }
 
     }
@@ -72,7 +72,7 @@
     flex-direction: column;
     position: relative;
     // padding: 0 !important;
-    margin-right: 13px !important;
+    // margin-right: 10px !important;
     overflow-y: hidden;
   }
 
@@ -88,21 +88,20 @@
     display: flex;
     flex: 0;
     flex-direction: row;
-    // padding-top: 10px;
-    padding: 10px 0px 8px !important;
-    // border: solid 1px red;
+    padding: 10px 15px 8px !important;
+    justify-content: space-between;
 
     md-switch {
       margin: 0;
     }
 
     .menubar {
-      flex: 1;
+      flex: 0;
       align-items: center;
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
-      padding-right: 0px;
+      justify-content: flex-start;
+      // padding-right: 15px;
     }
 
   }
@@ -120,7 +119,7 @@
 
       align-self: stretch;
       flex: 1;
-      margin: 0px 4px 15px 15px;
+      margin: 0px 15px 15px 15px;
       background-color: #eee;
 
       &.disabled {
@@ -133,7 +132,7 @@
 
       flex: 1;
       align-self: stretch;
-      margin: 0px 4px 15px 15px;
+      margin: 0px 5px 15px 15px;
       justify-content: center;
       align-items: center;
 

@@ -61,6 +61,7 @@
         "draggabilly": "^2.2.0",
         "file-saver": "2.0.0",
         "gh-pages": "2.1.1",
+        "numeral": "^2.0.6",
         "rxjs": "^6.5.4",
         "vanilla-picker": "2.10.0",
         "wellknown": "^0.5.0"

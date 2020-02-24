@@ -33,6 +33,31 @@ export const PROFILE_INFO_PANEL_TEMPLATE = ` 
                     <md-button
                         aria-label="Menu"
                         ng-disabled="status === 'loading'"
+                        class="black"
+                        style="margin: 0px;"
+                        ng-click="$mdOpenMenu($event)"
+                    >
+                        {{ ('plugins.elevation.infoPanel.statsSource.' + statsSource) | translate }}
+                        <md-tooltip>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate }}</md-tooltip>
+                    </md-button>
+                    <md-menu-content class="rv-menu rv-dense rv-elevation-stats-source-menu">
+                        <md-menu-item ng-disabled={true}>
+                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.7rem; color: #aaa;'>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate | uppercase }}</span>
+                        </md-menu-item>
+                        <md-menu-divider class="rv-lg"></md-menu-divider>
+                        <md-menu-item ng-repeat="source in statsSources">
+                            <md-button ng-click="handleStatsSourceChange(source)">
+                                <span style='flex-basis: auto; overflow-wrap:normal;'>{{ ('plugins.elevation.infoPanel.statsSource.' + source) | translate }}</span>
+                                <md-icon md-svg-icon="action:done" ng-if="source === statsSource"></md-icon>
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+
+                <md-menu md-position-mode="target-left target">
+                    <md-button
+                        aria-label="Menu"
+                        ng-disabled="status === 'loading'"
                         class="md-icon-button black"
                         ng-click="$mdOpenMenu($event)">
                         <md-icon>
@@ -55,6 +80,9 @@ export const PROFILE_INFO_PANEL_TEMPLATE = ` 
                         </md-menu-item>
                     </md-menu-content>
                 </md-menu>
+
+            </md-menu-bar>
+            <md-menu-bar class="menubar">
 
                 <md-switch ng-model="smoothProfile" ng-disabled="status === 'loading'" ng-if="mode === 'profile'" class="md-primary" aria-label="{{ 'plugins.elevation.infoPanel.smoothProfileBtn.label' | translate }}" ng-change="handleSmoothChange()">
                     <md-label>{{ 'plugins.elevation.infoPanel.smoothProfileBtn.label' | translate }}</md-label>
@@ -95,13 +123,11 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                     <md-button
                         aria-label="Menu"
                         ng-disabled="status === 'loading'"
-                        class="md-icon-button black"
-                        ng-click="$mdOpenMenu($event)">
-                        <md-icon>
-                            <svg xmlns="http://www.w3.org/2000/svg" fit height="100%" width="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24" focusable="false">
-                            <g><path d="M0,0h24v24H0V0z" fill="none"/><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></g>
-                            </svg>
-                        </md-icon>
+                        class="black"
+                        style="margin: 0px;"
+                        ng-click="$mdOpenMenu($event)"
+                    >
+                        {{ ('plugins.elevation.infoPanel.statsSource.' + statsSource) | translate }}
                         <md-tooltip>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate }}</md-tooltip>
                     </md-button>
                     <md-menu-content class="rv-menu rv-dense rv-elevation-stats-source-menu">
@@ -109,18 +135,12 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                             <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.7rem; color: #aaa;'>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate | uppercase }}</span>
                         </md-menu-item>
                         <md-menu-divider class="rv-lg"></md-menu-divider>
-                        <md-menu-item>
-                            <md-button ng-click="handleStatsSourceChange('cdem')">
-                                <span style='flex-basis: auto; overflow-wrap:normal;'>{{ 'plugins.elevation.infoPanel.statsSource.cdem' | translate }}</span>
-                                <md-icon md-svg-icon="action:done" ng-if="'cdem' === statsSource"></md-icon>
+                        <md-menu-item ng-repeat="source in statsSources">
+                            <md-button ng-click="handleStatsSourceChange(source)">
+                                <span style='flex-basis: auto; overflow-wrap:normal;'>{{ ('plugins.elevation.infoPanel.statsSource.' + source) | translate }}</span>
+                                <md-icon md-svg-icon="action:done" ng-if="source === statsSource"></md-icon>
                             </md-button>
                         </md-menu-item>
-                        <md-menu-item>
-                        <md-button ng-click="handleStatsSourceChange('cdsm')">
-                            <span style='flex-basis: auto; overflow-wrap:normal;'>{{ 'plugins.elevation.infoPanel.statsSource.cdsm' | translate }}</span>
-                            <md-icon md-svg-icon="action:done" ng-if="'cdsm' === statsSource"></md-icon>
-                        </md-button>
-                    </md-menu-item>
                     </md-menu-content>
                 </md-menu>
 
@@ -128,7 +148,7 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
 
         </div>
 
-        <div class="content" style="overflow-y: auto;">
+        <div class="content" style="overflow-y: auto; margin-right: 10px; margin-bottom: 10px;">
 
             <div class="rv-elevation-infopanel-statistics-table" ng-class="{ 'disabled': status === 'loading', 'hidden': !isStatisticsTableVisible()}">
 
@@ -146,15 +166,15 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                     <tbody class="md-body">
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.min' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.elevation.min}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.elevation.min) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.max' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.elevation.max}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.elevation.max) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.elevation.mean' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.elevation.mean}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.elevation.mean) }}</td>
                         </tr>
                     </tbody>
                     <thead class="md-head">
@@ -170,15 +190,15 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                     <tbody class="md-body">
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.min' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.slope.min}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.slope.min) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.max' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.slope.max}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.slope.max) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.slope.mean' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.slope.mean}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.slope.mean) }}</td>
                         </tr>
                     </tbody>
                     <thead class="md-head">
@@ -194,23 +214,23 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                     <tbody class="md-body">
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.north' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.aspect.north}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.north) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.south' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.aspect.south}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.south) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.west' | translate }}</td>
-                            <td class="md-cell md-numeric">{{result.aspect.west}}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.west) }}</td>
                         </tr>
                         <tr class="md-row">
                         <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.east' | translate }}</td>
-                        <td class="md-cell md-numeric">{{result.aspect.east}}</td>
+                        <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.east) }}</td>
                     </tr>
                     <tr class="md-row">
                     <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.flat' | translate }}</td>
-                    <td class="md-cell md-numeric">{{result.aspect.flat}}</td>
+                    <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.flat) }}</td>
                 </tr>
                     </tbody>
                 </table>
