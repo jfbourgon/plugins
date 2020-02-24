@@ -30,6 +30,9 @@ export class UI {
   private activeGraphic: any;
 
   private initialDrawToolsStrings: any;
+  private drawEndHandler: any;
+  private editEndHandler: any;
+  private unloadMapHandler: any;
 
   constructor (mapApi: any, config: any) {
 
@@ -98,21 +101,21 @@ export class UI {
     mapApi.agControllerRegister('ElevationToolbarCtrl', function () {
 
         this.controls = {
-          edit: {
-            name: 'edit',
-            label: 'plugins.elevation.toolbar.edit.label',
-            icon: 'M3.5,18.5L9.5,12.5L13.5,16.5L22,6.92L20.59,5.5L13.5,13.5L9.5,9.5L2,17L3.5,18.5Z',
-            tooltip: 'plugins.elevation.toolbar.edit.tooltip',
-            active: false,
-            viewbox: '0 0 24 24',
-            createIcon: () => { (<any>that).createIcon(this.controls.edit) },
-            visible: () => false, //getActiveGraphic() !== null,
-            disabled: () => false,
-            selected: () => this.controls.edit.active,
-            action: () => {
-                setActiveTool('edit')
-            }
-        },
+          // edit: {
+          //   name: 'edit',
+          //   label: 'plugins.elevation.toolbar.edit.label',
+          //   icon: 'M3.5,18.5L9.5,12.5L13.5,16.5L22,6.92L20.59,5.5L13.5,13.5L9.5,9.5L2,17L3.5,18.5Z',
+          //   tooltip: 'plugins.elevation.toolbar.edit.tooltip',
+          //   active: false,
+          //   viewbox: '0 0 24 24',
+          //   createIcon: () => { (<any>that).createIcon(this.controls.edit) },
+          //   visible: () => false, //getActiveGraphic() !== null,
+          //   disabled: () => false,
+          //   selected: () => this.controls.edit.active,
+          //   action: () => {
+          //       setActiveTool('edit')
+          //   }
+        // },
           profile: {
               name: 'profile',
               label: 'plugins.elevation.toolbar.profile.label',
@@ -120,7 +123,7 @@ export class UI {
               tooltip: 'plugins.elevation.toolbar.profile.tooltip',
               active: false,
               visible: () => true,
-              disabled: () => this.controls.edit.active,
+              disabled: () => that.mode === 'edit',
               viewbox: '0 0 24 24',
               createIcon: () => { (<any>that).createIcon(this.controls.profile) },
               selected: () => this.controls.profile.active,
@@ -135,7 +138,7 @@ export class UI {
               tooltip: 'plugins.elevation.toolbar.statistics.tooltip',
               active: false,
               visible: () => true,
-              disabled: () => this.controls.edit.active,
+              disabled: () =>  that.mode === 'edit',
               viewbox: '0 2 24 24',
               createIcon: () => { (<any>that).createIcon(this.controls.statistics) },
               selected: () => this.controls.statistics.active,
@@ -149,9 +152,15 @@ export class UI {
 
       });
 
-      const addToMap = this.addToMap.bind(this);
-      this.esriEditToolbar.on('vertex-move-stop', e => { that.handleEditEnd(e); });
-      this.esriDrawToolbar.on('draw-complete', e => { that.handleDrawEnd(e); });
+      const handleMapUnload = function(e) {
+        that.editEndHandler.remove();
+        that.drawEndHandler.remove();
+        that.unloadMapHandler.remove();
+      }
+
+      that.editEndHandler = this.esriEditToolbar.on('vertex-move-stop', this.handleEditEnd.bind(this));
+      that.drawEndHandler = this.esriDrawToolbar.on('draw-complete', this.handleDrawEnd.bind(this));
+      that.unloadMapHandler = this.mapApi.esriMap.on('unload', handleMapUnload);
 
   }
 
@@ -236,7 +245,7 @@ export class UI {
       }
 
       Object.keys(controls).forEach(k => controls[k].active = false);
-      controls[name].active = true;
+      controls[name] && (controls[name].active = true);
 
       this.identifyMode = mapApi.layersObj._identifyMode;
       mapApi.layersObj._identifyMode = [];
@@ -279,13 +288,13 @@ export class UI {
 
   }
 
-  showInfoPanel(geometry, mode = null) {
+  showInfoPanel(geometry, zoomLevel, mode?) {
 
     let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, mode || this.mode, null);
 
     // this.setActiveTool('edit');
 
-    infoPanel.show(geometry);
+    infoPanel.show(geometry, zoomLevel);
     infoPanel.panel.closing.subscribe(this.onHideInfoPanel.bind(this));
 
     this.infoPanel = infoPanel;
@@ -294,10 +303,12 @@ export class UI {
 
   handleDrawEnd(e) {
 
-    const { geometry } = e;
+    const { geometry, target: { map } } = e;
+    // console.debug(map.getZoom());
+
     this.addToMap(geometry);
 
-    this.showInfoPanel(geometry);
+    this.showInfoPanel(geometry, map.getZoom());
 
     this.setActiveTool('edit');
 
@@ -305,9 +316,9 @@ export class UI {
 
   handleEditEnd(e) {
 
-    let { graphic: { geometry }, ...rest } = e;
+    let { graphic: { geometry }, target: { map }, ...rest } = e;
     // console.debug(rest);
-    this.infoPanel.updateGeometry(geometry);
+    this.infoPanel.updateGeometry(geometry, map.getZoom());
 
   }
 

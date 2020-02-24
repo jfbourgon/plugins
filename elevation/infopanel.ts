@@ -83,20 +83,23 @@ export default class InfoPanel {
     this.mapApi.$compile($el);
 
     const text = $el.text();
+
+    $el = null;
+
     return text;
 
   }
 
-  updateGeometry (geometry) {
+  updateGeometry (geometry, zoomLevel) {
 
     const ctrl = (<any>window).angular.element(document.getElementById('elevation-rv-info-panel'));
     const scope = ctrl.scope();
 
-    scope.setGeometry(geometry);
+    scope.setGeometry(geometry, zoomLevel);
 
   }
 
-  show (geometry) {
+  show (geometry, zoomLevel) {
 
     const panel = this.mapApi.panels.create(INFO_PANEL_ID);
 
@@ -163,7 +166,7 @@ export default class InfoPanel {
       $scope.statsSources = ['cdem', 'cdsm'];
       $scope.statsSource = 'cdem';
 
-      $scope.mapZoomLevel = 1;
+      $scope.mapZoomLevel = zoomLevel || 1;
 
       $scope.result = null;
       $scope.isDirty = false;
@@ -177,9 +180,10 @@ export default class InfoPanel {
         return $scope.mode === 'profile' && $scope.status !== 'error';
       }
 
-      $scope.setGeometry = function(geometry) {
+      $scope.setGeometry = function(geometry, zoomLevel) {
         $scope.isDirty = true;
         $scope.geometry = geometry;
+        $scope.mapZoomLevel = zoomLevel;
       }
 
       // $scope.isDirty = function() {
@@ -292,6 +296,8 @@ export default class InfoPanel {
 
             type: 'line',
             options: {
+
+              onClick: (e, data) => console.debug('click on chart => ', e, data),
 
               maintainAspectRatio: true,
 
