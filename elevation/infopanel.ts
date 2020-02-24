@@ -45,6 +45,8 @@ export default class InfoPanel {
   private result: any;
   private isDirty: any;
 
+  private app: any;
+
   constructor (mapApi: any, esriBundle: any, mode: any, options: any) {
 
     this.mapApi = mapApi;
@@ -54,6 +56,15 @@ export default class InfoPanel {
     this.options = options;
 
     this.result = null;
+
+    // this.app = (<any>window).angular.module('ElevationModule', [])
+    // .config(['$sceDelegateProvider', function($sceDelegateProvider) {
+    //   // We must whitelist the JSONP endpoint that we are using to show that we trust it
+    //   $sceDelegateProvider.resourceUrlWhitelist([
+    //     'self',
+    //     'https://angularjs.org/**'
+    //   ]);
+    // }])
 
   }
 

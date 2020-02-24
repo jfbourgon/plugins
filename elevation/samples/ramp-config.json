@@ -246,6 +246,10 @@
     },
     "plugins": {
       "elevation": {
+        "dataSources": [
+          { "id": "cdem" },
+          "cdsm"
+        ]
       }
     }
 }
