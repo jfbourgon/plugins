@@ -423,7 +423,7 @@ export default class InfoPanel {
 
         $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
 
-          // withCredentials : true,
+          withCredentials : true,
           params: params
 
         }).then(function successCallback(response) {
@@ -483,7 +483,7 @@ export default class InfoPanel {
 
         $http.get('http://geogratis.gc.ca/services/elevation/cdem/profile', {
 
-          // withCredentials : true,
+          withCredentials : true,
           params: params
 
         }).then(function successCallback(response) {
