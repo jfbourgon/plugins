@@ -18,8 +18,7 @@ export const TOOLBAR_TEMPLATE = `
         </md-button>
         <!-- this will insert divider after every element except the last one -->
         <md-divider ng-if="!$last" ng-repeat-end></md-divider>
-    </md-but>
-    <span class="rv-spacer"></span>
+    </div>
 `;
 
 export const PROFILE_INFO_PANEL_TEMPLATE = ` 
@@ -263,4 +262,17 @@ export const DOWNLOAD_BUTTON_TEMPLATE = `
                 </svg>
             </md-icon>
         </md-button>
+`
+
+export const INFO_TIP_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-tip" class="body" ng-controller="InfoTipPanelCtrl as ctrl">
+        <div class="content">
+            {{ 'plugins.elevation.infoTipPanel.bodyText' | translate }}
+        </div>
+        <div class="footer">
+            <md-button class="black md-ink-ripple md-primary" ng-click="ctrl.dismiss()">
+                {{ 'plugins.elevation.infoTipPanel.okBtn.label' | translate }}
+            </md-button>
+        </div>
+    </div>
 `

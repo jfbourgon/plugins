@@ -21,7 +21,51 @@
 
 }
 
-// Dialog
+// Info Tip Panel
+#elevationInfoTipPanel {
+
+  display: flex;
+  flex: 1;
+
+  .panel-body {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-y: hidden;
+  }
+
+  .body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    overflow-y: hidden;
+  }
+
+  .content {
+    justify-content: center;
+    display: flex;
+    flex: 1;
+    overflow-y: auto;
+    margin: 15px;
+
+  }
+
+  .footer {
+
+    display: flex;
+    flex: 0;
+    justify-content: flex-start;
+    margin: 0px 10px 0px 10px;
+
+    button {
+      width: 100%;
+    }
+
+  }
+
+}
+
+// Info Panel
 #elevationInfoPanel {
 
   display: flex;

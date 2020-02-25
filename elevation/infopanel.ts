@@ -2,30 +2,24 @@
 import { stringify as toWKT } from 'wellknown';
 import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 
+const Draggabilly = require('draggabilly');
+
+const FileSaver = require('file-saver');
+var Chart = require('chart.js');
+
 const numeral = require('numeral');
 
-// Create fake locale to format number (always as ISO, regardless of user's locale)
+// Create dummy "ISO" locale to format numbers (regardless of user's locale)
 numeral.register('locale', 'iso', {
   delimiters: {
       thousands: ' ',
       decimal: ','
   }
-  // abbreviations: {
-  //     thousand: 'k',
-  //     million: 'm',
-  //     billion: 'b',
-  //     trillion: 't'
-  // },
-  // ordinal : function (number) {
-  //     return number === 1 ? 'er' : 'ème';
-  // },
-  // currency: {
-  //     symbol: '€'
-  // }
 });
 
 numeral.locale('iso');
 
+// Fake data for development purpose (TODO: remove when web service is ready)
 const STATISTICS = {
 	elevation:{
 		min: -0.14,
@@ -45,11 +39,6 @@ const STATISTICS = {
 		flat: 0.04
 	}
 };
-
-const Draggabilly = require('draggabilly');
-
-const FileSaver = require('file-saver');
-var Chart = require('chart.js');
 
 import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
@@ -81,15 +70,6 @@ export default class InfoPanel {
 
     this.result = null;
 
-    // this.app = (<any>window).angular.module('ElevationModule', [])
-    // .config(['$sceDelegateProvider', function($sceDelegateProvider) {
-    //   // We must whitelist the JSONP endpoint that we are using to show that we trust it
-    //   $sceDelegateProvider.resourceUrlWhitelist([
-    //     'self',
-    //     'https://angularjs.org/**'
-    //   ]);
-    // }])
-
   }
 
   setResult (result) {
@@ -110,20 +90,20 @@ export default class InfoPanel {
 
   }
 
-  getTranslatedText (id) {
+  // getTranslatedText (id) {
 
-    const template = `<div>{{ '` + id + `' | translate }}</div>`;
+  //   const template = `<div>{{ '` + id + `' | translate }}</div>`;
 
-    let $el = $(template);
-    this.mapApi.$compile($el);
+  //   let $el = $(template);
+  //   this.mapApi.$compile($el);
 
-    const text = $el.text();
+  //   const text = $el.text();
 
-    $el = null;
+  //   $el = null;
 
-    return text;
+  //   return text;
 
-  }
+  // }
 
   updateGeometry (geometry, zoomLevel) {
 
@@ -139,7 +119,7 @@ export default class InfoPanel {
     const panel = this.mapApi.panels.create(INFO_PANEL_ID);
 
     let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
-    panel.header.title = this.getTranslatedText(titleId); //$title.text();
+    panel.header.title = this.mapApi.getTranslatedText(titleId); //$title.text();
 
     const close = panel.header.closeButton;
     // const toggle = panel.header.toggleButton;
@@ -438,12 +418,11 @@ export default class InfoPanel {
 
         }
 
-        // $scope.result = data;
-
       }
 
       $scope.updateStatisticsTable = function() {
         let data = that.getResult();
+        console.debug(data.elevation.toto);
         $scope.result = data;
       }
 
@@ -503,7 +482,6 @@ export default class InfoPanel {
 
           $scope.status = 'loaded';
 
-          // $scope.result = data;
           that.setResult(data);
           $scope.updateChart();
 
@@ -518,15 +496,17 @@ export default class InfoPanel {
         let geom = $scope.geometry;
 
         let params = {
-          geom: null,
           level: $scope.mapZoomLevel,
-          type: $scope.statsSource
+          // type: $scope.statsSource
         };
 
-        $http.get('https://geogratis.gc.ca/services/elevation/cdem/profile', {
+        const url = `https://maps.geogratis.gc.ca/elevation/${$scope.statsSource}/stats`;
 
-          withCredentials : true,
-          params: params
+        $http.get(url, {
+
+          // withCredentials : true,
+          params: params,
+          responseType: 'json'
 
         }).then(function successCallback(response) {
 
@@ -534,17 +514,12 @@ export default class InfoPanel {
 
           $scope.status = 'loaded';
 
-          // $scope.result = data;
-          that.setResult(data);
+          that.setResult(STATISTICS);
           $scope.updateStatisticsTable();
 
         }, function errorCallback(response) {
 
-          $scope.status = 'loaded';
-
-          // $scope.result = response;
-          that.setResult(STATISTICS);
-          $scope.updateStatisticsTable();
+          $scope.status = 'error';
 
         });
 

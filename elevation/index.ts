@@ -1,6 +1,10 @@
 // import { UIManager } from './ui-manager';
 import { UI } from './ui';
 
+const PROFILE_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/profile';
+const STATISTICS_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/elevation-stats';
+const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm'];
+
 export default class ElevationServicePlugin {
 
   private mapApi;
@@ -34,12 +38,81 @@ export default class ElevationServicePlugin {
   }
 
 
+  parseConfig(config) : Configuration {
+
+    let conf = <Configuration>{};
+
+    let profileServices = ['cdem', 'csdm'].map(keyword => ({
+      id: keyword + '-profile',
+      serviceType: 'profile',
+      url: `https://geogratis.gc.ca/services/elevation/${keyword}/profile`
+    }));
+
+    let statsServices = ['cdem', 'csdm'].map(keyword => ({
+      id: keyword + '-statistics',
+      serviceType: 'statistics',
+      url: `https://geogratis.gc.ca/services/elevation/statistics`,
+      params: {
+        type: keyword
+      }
+    }));
+
+    let services = [...profileServices, ...statsServices];
+
+    if ( !config.services ) {
+    } else if ( !Array.isArray(config.services) ) {
+      console.warn('Elevation plugin: services config keyword must be array, will fallback to default services ...');
+    } else {
+
+      services = config.services.map((item, idx) => {
+
+        switch(typeof item) {
+          case 'object':
+            if ( !item.id || !item.url || !item.serviceType ) {
+              console.warn('Elevation plugin: services config item must be an object with id and url properties...');
+              return null;
+              break;
+            }
+            return item;
+            break;
+          default:
+            console.warn('Elevation plugin: services config item must be an object with id, serviceType, and url properties...');
+            break;
+        }
+
+      });
+
+    }
+
+    conf.services = services;
+    conf.language = this._RV.getCurrentLang();
+
+    console.debug(conf);
+
+    return conf;
+
+  }
+
   init(mapApi: any) {
 
     this.isPluginActive = false;
 
-    let config = this._RV.getConfig('plugins').elevation;
-    config.language = this._RV.getCurrentLang();
+    mapApi.getTranslatedText = function (stringId) {
+
+      const template = `<div>{{ '` + stringId + `' | translate }}</div>`;
+
+      let $el = $(template);
+      this.$compile($el);
+
+      const text = $el.text();
+
+      $el = null;
+
+      return text;
+
+    }
+
+    let config = this.parseConfig(this._RV.getConfig('plugins').elevation);
 
     this.ui = new UI(mapApi, config);
 
@@ -78,6 +151,12 @@ ElevationServicePlugin.prototype.translations = {
         label: 'Elevation Statistics',
         tooltip: 'Elevation Statistics'
       }
+    },
+    infoTipPanel: {
+      okBtn: {
+        label: 'Thank you, I understand...'
+      },
+      bodyText: 'Lorem ipsum dolor sit amet, adipiscing vulputate. Suspendisse suspendisse, sit proin orci diam, scelerisque vulputate eros elit fringilla est volutpat, amet libero. Et mi proin aenean pellentesque varius phasellus, amet in tincidunt vestibulum et praesent amet, feugiat sem a consectetuer, neque risus neque justo sed velit, sapien fermentum sodales amet lacinia lorem. Metus imperdiet, senectus hendrerit aliquam, magna id nibh ut in, auctor et lectus tortor risus. Rhoncus sed, non consectetuer amet duis, sit elementum nec in suscipit ultricies morbi, vehicula imperdiet a, platea sollicitudin. Felis dui in ligula aut, mauris curabitur maecenas quis, inceptos sit sodales amet nostrud, praesentium proin platea congue eget ligula dolor. Sed vitae dignissim posuere viverra purus. Lacinia etiam donec erat aenean est eleifend. Vitae facilisis nec. Torquent risus, eu integer, ornare pede, nulla consequat ornare, montes dolor aliquam non. Mauris enim, laoreet exercitationem morbi dui nulla arcu suspendisse.'
     },
     infoPanel: {
       title: {
@@ -140,17 +219,6 @@ ElevationServicePlugin.prototype.translations = {
       }
     }
 
-      // draw: {
-      //     menu: 'Draw Toolbar',
-      //     picker: 'Select color',
-      //     point: 'Draw point',
-      //     line: 'Draw line',
-      //     polygon: 'Draw polygon',
-      //     measure: 'Show/Hide measures',
-      //     extent: 'Erase selected graphics',
-      //     write: 'Save to download folder',
-      //     read: 'Upload graphics file'
-      // }
   },
   'fr-CA': {
     pluginName: 'Service d\'élévation',
@@ -163,6 +231,12 @@ ElevationServicePlugin.prototype.translations = {
         label: 'Statistiques d\'élévation',
         tooltip: 'Statistiques d\'élévation'
       }
+    },
+    infoTipPanel: {
+      okBtn: {
+        label: 'Merci, j\'ai compris...'
+      },
+      bodyText: 'Lorem ipsum dolor sit amet, adipiscing vulputate. Suspendisse suspendisse, sit proin orci diam, scelerisque vulputate eros elit fringilla est volutpat, amet libero. Et mi proin aenean pellentesque varius phasellus, amet in tincidunt vestibulum et praesent amet, feugiat sem a consectetuer, neque risus neque justo sed velit, sapien fermentum sodales amet lacinia lorem. Metus imperdiet, senectus hendrerit aliquam, magna id nibh ut in, auctor et lectus tortor risus. Rhoncus sed, non consectetuer amet duis, sit elementum nec in suscipit ultricies morbi, vehicula imperdiet a, platea sollicitudin. Felis dui in ligula aut, mauris curabitur maecenas quis, inceptos sit sodales amet nostrud, praesentium proin platea congue eget ligula dolor. Sed vitae dignissim posuere viverra purus. Lacinia etiam donec erat aenean est eleifend. Vitae facilisis nec. Torquent risus, eu integer, ornare pede, nulla consequat ornare, montes dolor aliquam non. Mauris enim, laoreet exercitationem morbi dui nulla arcu suspendisse.'
     },
     infoPanel: {
       title: {
@@ -203,7 +277,7 @@ ElevationServicePlugin.prototype.translations = {
           label: 'Orientation de la pente',
           unit: '(en % de la superficie)',
           north: 'Vers le nord',
-          south: 'Vers le nord',
+          south: 'Vers le sud',
           east: 'Vers l\'est',
           west: 'Vers l\'ouest',
           flat: 'Aucune orientation (plat)'
@@ -225,19 +299,13 @@ ElevationServicePlugin.prototype.translations = {
       }
     }
 
-
-      // draw: {
-      //     menu: 'Barre de dessin',
-      //     picker: 'Sélectionner la couleur',
-      //     point: 'Dessiner point',
-      //     line: 'Dessiner ligne',
-      //     polygon: 'Dessiner polygon',
-      //     measure: 'Afficher/Cacher les mesures',
-      //     extent: 'Effacer les graphiques sélectionnés',
-      //     write: 'Sauvegarder dans le répertoire téléchargement',
-      //     read: 'Charger le fichier de graphiques'
-      // }
   }
 };
+
+
+interface Configuration {
+  language: string;
+  services: Array<any>;
+}
 
 (<any>window).elevation = ElevationServicePlugin;
