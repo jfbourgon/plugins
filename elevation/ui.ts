@@ -1,13 +1,13 @@
 import storage from './simple-storage';
 
 import { TOOLBAR_TEMPLATE } from './templates';
-import InfoPanel from './InfoPanel';
-import InfoTipPanel from './InfoTipPanel';
+import InfoPanel from './infoPanel';
+import InfoTipPanel from './infoTipPanel';
 
 const GRAPHICS_LAYER_ID = 'graphicsRvElevation';
 
-const INFO_PANEL_ID = 'elevationInfoPanel';
-const INFO_TIP_PANEL_ID = 'elevationInfoTipPanel';
+// const INFO_PANEL_ID = 'elevationInfoPanel';
+// const INFO_TIP_PANEL_ID = 'elevationInfoTipPanel';
 
 const DEFAULT_DRAW_FILL_SYMBOL_COLOR = 'rgba(217,205,229, 0.5)';
 const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';

@@ -5,19 +5,11 @@ import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
 const Draggabilly = require('draggabilly');
 
 const FileSaver = require('file-saver');
-var Chart = require('chart.js');
+const Chart = require('chart.js');
 
 const numeral = require('numeral');
 
-// Create dummy "ISO" locale to format numbers (regardless of user's locale)
-numeral.register('locale', 'iso', {
-  delimiters: {
-      thousands: ' ',
-      decimal: ','
-  }
-});
-
-numeral.locale('iso');
+import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
 // Fake data for development purpose (TODO: remove when web service is ready)
 const STATISTICS = {
@@ -40,9 +32,17 @@ const STATISTICS = {
 	}
 };
 
-import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
-
 const INFO_PANEL_ID = 'elevationInfoPanel';
+
+// Create dummy "ISO" locale to format numbers (regardless of user's locale)
+numeral.register('locale', 'iso', {
+  delimiters: {
+      thousands: ' ',
+      decimal: ','
+  }
+});
+
+numeral.locale('iso');
 
 export default class InfoPanel {
 

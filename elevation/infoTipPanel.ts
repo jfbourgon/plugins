@@ -3,7 +3,7 @@ import { INFO_TIP_PANEL_TEMPLATE } from './templates'
 
 const INFO_TIP_PANEL_ID = 'elevationInfoTipPanel';
 
-export default class InfoPanel {
+export default class InfoTipPanel {
 
   private mapApi: any;
   private panel: any;
