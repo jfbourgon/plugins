@@ -1,8 +1,8 @@
 import storage from './simple-storage';
 
 import { TOOLBAR_TEMPLATE } from './templates';
-import InfoPanel from './infoPanel';
-import InfoTipPanel from './infoTipPanel';
+import InfoPanel from './InfoPanel';
+import InfoTipPanel from './InfoTipPanel';
 
 const GRAPHICS_LAYER_ID = 'graphicsRvElevation';
 
