@@ -264,6 +264,27 @@ export const DOWNLOAD_BUTTON_TEMPLATE = `
         </md-button>
 `
 
+export const VIEWSHED_INFO_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-panel" ng-controller="InfoPanelCtrl" class="body">
+
+        <div class="toolbar">
+
+            <md-menu-bar class="menubar">
+                Menu
+            </md-menu-bar>
+
+        </div>
+
+        <div class="content" style="overflow-y: auto; margin-right: 10px; margin-bottom: 10px;">
+            Content
+        </div>
+
+    </div>
+`
+
+
+
+
 export const INFO_TIP_PANEL_TEMPLATE = ` 
     <div id="elevation-rv-info-tip" class="body" ng-controller="InfoTipPanelCtrl as ctrl">
         <div class="content">

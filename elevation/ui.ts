@@ -91,11 +91,16 @@ export class UI {
     this.esriDrawToolbar = new esriBundle.drawToolbar(mapApi.esriMap);
     this.esriEditToolbar = new esriBundle.editToolbar(mapApi.esriMap);
 
-    let drawLineSymbol = new esriBundle.SimpleLineSymbol(esriBundle.SimpleLineSymbol.STYLE_SHORTDASH, new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR), 2);
-    let drawFillSymbol = new esriBundle.SimpleFillSymbol(esriBundle.SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, new esriBundle.Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR));
+    let outlineColor = new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR);
+    let fillColor = new esriBundle.Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR);
+    let markerOutlineSymbol = new esriBundle.SimpleLineSymbol(esriBundle.SimpleLineSymbol.STYLE_SOLID, outlineColor, 1);
+
+    let drawPointSymbol = new esriBundle.SimpleMarkerSymbol(esriBundle.SimpleMarkerSymbol.STYLE_CIRCLE, 10, markerOutlineSymbol, outlineColor)
+    let drawLineSymbol = new esriBundle.SimpleLineSymbol(esriBundle.SimpleLineSymbol.STYLE_SHORTDASH, outlineColor, 2);
+    let drawFillSymbol = new esriBundle.SimpleFillSymbol(esriBundle.SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, fillColor);
 
     this.symbols = {
-      point: new esriBundle.SimpleMarkerSymbol(),
+      point: drawPointSymbol,
       line: drawLineSymbol,
       polygon: drawFillSymbol
     };
@@ -107,6 +112,21 @@ export class UI {
     mapApi.agControllerRegister('ElevationToolbarCtrl', function () {
 
         this.controls = {
+          viewshed: {
+              name: 'viewshed',
+              label: 'plugins.elevation.toolbar.viewshed.label',
+              icon: 'M23.5,17L18.5,22L15,18.5L16.5,17L18.5,19L22,15.5L23.5,17M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.75,12.65 22.44,13.26 22.08,13.85C21.5,13.5 20.86,13.25 20.18,13.12L20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12C4.83,15.36 8.24,17.5 12,17.5L13.21,17.43C13.07,17.93 13,18.46 13,19V19.46L12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5Z',
+              tooltip: 'plugins.elevation.toolbar.viewshed.tooltip',
+              active: false,
+              visible: () => true,
+              disabled: () => that.isEditing,
+              viewbox: '0 0 24 24',
+              createIcon: () => { (<any>that).createIcon(this.controls.viewshed) },
+              selected: () => this.controls.viewshed.active,
+              action: () => {
+                  setActiveTool('viewshed')
+              }
+          },
           profile: {
               name: 'profile',
               label: 'plugins.elevation.toolbar.profile.label',
@@ -151,6 +171,7 @@ export class UI {
 
       that.editEndHandler = this.esriEditToolbar.on('vertex-move-stop', this.handleEditEnd.bind(this));
       that.drawEndHandler = this.esriDrawToolbar.on('draw-complete', this.handleDrawEnd.bind(this));
+
       that.unloadMapHandler = this.mapApi.esriMap.on('unload', handleMapUnload);
 
   }
@@ -206,7 +227,9 @@ export class UI {
     };
 
     this.esriDrawToolbar.deactivate();
-    this.esriEditToolbar.activate(esriBundle.editToolbar.EDIT_VERTICES, this.activeGraphic, editOptions);
+
+    let editToolToActivate = this.selectedTool === 'viewshed' ? esriBundle.editToolbar.MOVE : esriBundle.editToolbar.EDIT_VERTICES;
+    this.esriEditToolbar.activate(editToolToActivate, this.activeGraphic, editOptions);
 
     this.isEditing = true;
 
@@ -231,13 +254,14 @@ export class UI {
 
     esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
 
-    let esriToolNameToActivate = name === 'profile' ? 'polyline' : 'polygon';
+    let esriToolNameToActivate = name === 'viewshed' ? 'point' : ( name === 'profile' ? 'polyline' : 'polygon' );
 
     // activate the right tool from the ESRI draw toolbar
     this.esriDrawToolbar.activate(esriBundle.drawToolbar[esriToolNameToActivate.toUpperCase()], drawOptions);
 
     this.esriDrawToolbar.setLineSymbol(this.symbols.line);
     this.esriDrawToolbar.setFillSymbol(this.symbols.polygon);
+    this.esriDrawToolbar.setMarkerSymbol(this.symbols.point);
 
     if (this.identifyMode === null) {
       this.identifyMode = mapApi.layersObj._identifyMode;
@@ -339,7 +363,9 @@ export class UI {
 
     this.infoPanel = infoPanel;
 
-    this.activateEditingMode();
+    // if (this.selectedTool !== 'viewshed') {
+      this.activateEditingMode();
+    // }
 
   }
 
@@ -364,6 +390,9 @@ export class UI {
     const symbols = this.symbols;
 
     switch (geometry.type) {
+      case 'point':
+        this.addGraphic(geometry, symbols.point);
+        break;
       case 'polyline':
         this.addGraphic(geometry, symbols.line);
         break;
@@ -492,6 +521,9 @@ export class UI {
 UI.prototype.translations = {
   'en-CA': {
       drawTools: {
+        viewshed: {
+          addPoint: 'Cliquer pour placer le point de vue',
+        },
         profile: {
           // addPoint: 'Click to add a point',
           complete: 'Double-click to complete the profile',
@@ -512,6 +544,9 @@ UI.prototype.translations = {
     },
     'fr-CA': {
       drawTools: {
+        viewshed: {
+          addPoint: 'Cliquer pour placer le point de vue',
+        },
         profile: {
           // addPoint: 'Cliquer pour ajouter un point',
           complete: 'Double-cliquer pour générer le profil',

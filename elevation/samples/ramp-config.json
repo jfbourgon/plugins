@@ -217,13 +217,27 @@
       "baseMaps": [
         {
           "id": "baseElevation",
-          "name": "Canada Base Map - Elevation(CBME) ",
+          "name": "Canada Base Map - Elevation (CBME) ",
           "altText": "altText - Canada Base Map - Elevation(CBME) ",
           "layers": [
             {
               "id": "CBME",
               "layerType": "esriFeature",
               "url": "https://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBME_CBCE_HS_RO_3978/MapServer"
+            }
+          ],
+          "tileSchemaId": "EXT_NRCAN_Lambert_3978#LOD_NRCAN_Lambert_3978"
+        },
+        {
+          "id": "baseNrCan",
+          "name": "Canada Base Map - Transportation (CBMT)",
+          "description": "The Canada Base Map - Transportation (CBMT) web mapping services of the Earth Sciences Sector at Natural Resources Canada, are intended primarily for online mapping application users and developers.",
+          "altText": "altText - The Canada Base Map - Transportation (CBMT)",
+          "layers": [
+            {
+              "id": "CBMT",
+              "layerType": "esriFeature",
+              "url": "https://geoappext.nrcan.gc.ca/arcgis/rest/services/BaseMaps/CBMT3978/MapServer"
             }
           ],
           "tileSchemaId": "EXT_NRCAN_Lambert_3978#LOD_NRCAN_Lambert_3978"
@@ -246,10 +260,6 @@
     },
     "plugins": {
       "elevation": {
-        "dataSources": [
-          { "id": "cdem" },
-          "cdsm"
-        ]
       }
     }
 }

@@ -2,7 +2,9 @@
 import { UI } from './ui';
 
 const PROFILE_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/profile';
-const STATISTICS_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/elevation-stats';
+const STATISTICS_SERVICE_DEFAULT_URL = 'https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${source}/stats.json';
+const VIEWSHED_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/profile';
+
 const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm'];
 
 export default class ElevationServicePlugin {
@@ -42,18 +44,18 @@ export default class ElevationServicePlugin {
 
     let conf = <Configuration>{};
 
-    let profileServices = ['cdem', 'csdm'].map(keyword => ({
-      id: keyword + '-profile',
+    let profileServices = ['cdem', 'csdm'].map(source => ({
+      id: source + '-profile',
       serviceType: 'profile',
-      url: `https://geogratis.gc.ca/services/elevation/${keyword}/profile`
+      url: `https://geogratis.gc.ca/services/elevation/${source}/profile`
     }));
 
-    let statsServices = ['cdem', 'csdm'].map(keyword => ({
-      id: keyword + '-statistics',
+    let statsServices = ['cdem', 'csdm'].map(source => ({
+      id: source + '-statistics',
       serviceType: 'statistics',
-      url: `https://geogratis.gc.ca/services/elevation/statistics`,
+      url: `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${source}/stats.json`,
       params: {
-        type: keyword
+        type: source
       }
     }));
 
@@ -150,6 +152,10 @@ ElevationServicePlugin.prototype.translations = {
       statistics: {
         label: 'Elevation Statistics',
         tooltip: 'Elevation Statistics'
+      },
+      viewshed: {
+        label: 'Viewshed Analysis',
+        tooltip: 'Viewshed Analysis'
       }
     },
     infoTipPanel: {
@@ -162,6 +168,7 @@ ElevationServicePlugin.prototype.translations = {
       title: {
         profile: 'Elevation Profile',
         statistics: 'Elevation Statistics',
+        viewshed: 'Viewshed Analysis'
       },
       header: {
         downloadBtn: {
@@ -230,6 +237,10 @@ ElevationServicePlugin.prototype.translations = {
       statistics: {
         label: 'Statistiques d\'élévation',
         tooltip: 'Statistiques d\'élévation'
+      },
+      viewshed: {
+        label: 'Analyse de visibilité',
+        tooltip: 'Analyse de visibilité'
       }
     },
     infoTipPanel: {
@@ -242,6 +253,7 @@ ElevationServicePlugin.prototype.translations = {
       title: {
         profile: 'Profil d\'élévation',
         statistics: 'Statistiques d\'élévation',
+        viewshed: 'Analyse de visibilité'
       },
       header: {
         downloadBtn: {

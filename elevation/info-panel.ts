@@ -9,7 +9,7 @@ const Chart = require('chart.js');
 
 const numeral = require('numeral');
 
-import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
+import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
 // Fake data for development purpose (TODO: remove when web service is ready)
 const STATISTICS = {
@@ -118,8 +118,9 @@ export default class InfoPanel {
 
     const panel = this.mapApi.panels.create(INFO_PANEL_ID);
 
-    let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
-    panel.header.title = this.mapApi.getTranslatedText(titleId); //$title.text();
+    // let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
+    let titleId = 'plugins.elevation.infoPanel.title.' + this.mode;
+    panel.header.title = this.mapApi.getTranslatedText(titleId);
 
     const close = panel.header.closeButton;
     // const toggle = panel.header.toggleButton;
@@ -169,7 +170,6 @@ export default class InfoPanel {
 
     this.mapApi.agControllerRegister('InfoPanelCtrl', ['$scope','$http', function($scope, $http) {
 
-
       $scope.mode = that.mode;
 
       $scope.status = 'loading';
@@ -188,7 +188,7 @@ export default class InfoPanel {
       $scope.isDirty = false;
       // that.setResult(null);
 
-      $scope.getFormattedValue = function(value, format = '0,0.0') {
+      $scope.getFormattedValue = function(value, format = '0,0.00') {
         return numeral(value).format(format);
       }
 
@@ -500,13 +500,14 @@ export default class InfoPanel {
           // type: $scope.statsSource
         };
 
-        const url = `https://maps.geogratis.gc.ca/elevation/${$scope.statsSource}/stats`;
+        const url = `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${$scope.statsSource}/stats.json`;
 
         $http.get(url, {
 
           // withCredentials : true,
           params: params,
-          responseType: 'json'
+          // responseType: 'json',
+          // transformResponse: function (data) { console.debug('data => ', data); return data; }
 
         }).then(function successCallback(response) {
 
@@ -514,7 +515,7 @@ export default class InfoPanel {
 
           $scope.status = 'loaded';
 
-          that.setResult(STATISTICS);
+          that.setResult(data);
           $scope.updateStatisticsTable();
 
         }, function errorCallback(response) {
@@ -529,12 +530,12 @@ export default class InfoPanel {
 
     }]);
 
-
     let downloadButtonTemplate = $(DOWNLOAD_BUTTON_TEMPLATE);
     this.mapApi.$compile(downloadButtonTemplate)
     panel.header.prepend(downloadButtonTemplate);
 
-    let infoPanelTemplate = this.mode === 'profile' ? $(PROFILE_INFO_PANEL_TEMPLATE) : $(STATISTICS_INFO_PANEL_TEMPLATE);
+    let infoPanelTemplate = this.mode === 'viewshed' ? $(VIEWSHED_INFO_PANEL_TEMPLATE) : ( this.mode === 'profile' ? $(PROFILE_INFO_PANEL_TEMPLATE) : $(STATISTICS_INFO_PANEL_TEMPLATE) );
+
     this.mapApi.$compile(infoPanelTemplate);
     panel.body.empty();
     panel.body.prepend(infoPanelTemplate);
