@@ -11,26 +11,19 @@ const numeral = require('numeral');
 
 import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
 
-// Fake data for development purpose (TODO: remove when web service is ready)
-const STATISTICS = {
-	elevation:{
-		min: -0.14,
-		max: 4300.22,
-		mean: 24.01,
-	},
-	slope:{
-		min: 0,
-		max: 76.52,
-		mean: 3.31
-	},
-	aspect:{
-		north: 0.10,
-		south: 0.25,
-		west: 0.43,
-		east: 0.18,
-		flat: 0.04
-	}
-};
+const LEVEL_TO_RADIUS_MAP = {
+  10: 100000,
+  11: 51200,
+  12: 25600,
+  13: 12800,
+  14: 6400,
+  15: 3200,
+  16: 1600,
+  17: 800
+}
+
+const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
+const MAX_VIEWSHED_OFFSET = 100;
 
 const INFO_PANEL_ID = 'elevationInfoPanel';
 
@@ -43,6 +36,56 @@ numeral.register('locale', 'iso', {
 });
 
 numeral.locale('iso');
+
+const roundNumber = (num, scale) => {
+
+  if(!("" + num).includes("e")) {
+
+    // @ts-ignore
+    return +(Math.round(num + "e+" + scale)  + "e-" + scale);
+
+  } else {
+
+    var arr = ("" + num).split("e");
+    var sig = ""
+    if(+arr[1] + scale > 0) {
+      sig = "+";
+    }
+
+    // @ts-ignore
+    return +(Math.round(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
+
+  }
+
+}
+
+// Very naive implementation to round up coordinates
+const roundGeoJsonCoordinates = (geojson, nbDecimals = DEFAULT_COORDINATE_ROUNDING_SCALE) => {
+
+  let { coordinates, type } = geojson;
+
+  let outCoordinates;
+
+  if (type === 'Point') {
+    let [x, y] = coordinates;
+    outCoordinates = [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
+  } else if (type === 'Polygon') {
+    outCoordinates = coordinates.map((ring, i) => {
+      return ring.map(([x, y], i) => {
+        return [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
+      });
+    });
+  } else if (type === 'LineString') {
+    outCoordinates = coordinates.map(([x, y], i) => {
+      return [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
+    });
+  } else {
+    return geojson;
+  }
+
+  return {...geojson, ...{ coordinates: outCoordinates }};
+
+}
 
 export default class InfoPanel {
 
@@ -90,27 +133,12 @@ export default class InfoPanel {
 
   }
 
-  // getTranslatedText (id) {
-
-  //   const template = `<div>{{ '` + id + `' | translate }}</div>`;
-
-  //   let $el = $(template);
-  //   this.mapApi.$compile($el);
-
-  //   const text = $el.text();
-
-  //   $el = null;
-
-  //   return text;
-
-  // }
-
-  updateGeometry (geometry, zoomLevel) {
+  updateGeometry (geometry /*, zoomLevel */) {
 
     const ctrl = (<any>window).angular.element(document.getElementById('elevation-rv-info-panel'));
     const scope = ctrl.scope();
 
-    scope.setGeometry(geometry, zoomLevel);
+    scope.setGeometry(geometry, /*, zoomLevel */);
 
   }
 
@@ -118,12 +146,10 @@ export default class InfoPanel {
 
     const panel = this.mapApi.panels.create(INFO_PANEL_ID);
 
-    // let titleId = this.mode === 'profile' ? 'plugins.elevation.infoPanel.title.profile' : 'plugins.elevation.infoPanel.title.statistics';
     let titleId = 'plugins.elevation.infoPanel.title.' + this.mode;
     panel.header.title = this.mapApi.getTranslatedText(titleId);
 
     const close = panel.header.closeButton;
-    // const toggle = panel.header.toggleButton;
 
     panel.allowOffscreen = true;
 
@@ -131,13 +157,7 @@ export default class InfoPanel {
     close.addClass('black md-ink-ripple');
 
     panel.element.addClass('ag-theme-material mobile-fullscreen tablet-fullscreen rv-elevation-dialog-hidden');
-
-    panel.element.css({
-      top: '50%',
-      left: '50%',
-      marginLeft: '-350px',
-      marginTop: '-250px'
-    });
+    panel.element.addClass(this.mode === 'viewshed' ? 'rv-elevation-dialog-small' : 'rv-elevation-dialog-large')
 
     // Make panel draggable...
     panel.element.addClass('draggable');
@@ -155,7 +175,7 @@ export default class InfoPanel {
 
         const { downloadFileName, data } = that.prepareDownload()
 
-        // save the file. Some browsers like IE and Edge doesn't support File constructor, use blob
+        // Save the file. Some browsers like IE and Edge doesn't support File constructor, use blob
         // https://stackoverflow.com/questions/39266801/saving-file-on-ie11-with-filesaver
         const file = new Blob([data], { type: 'application/json' });
         FileSaver.saveAs(file, downloadFileName);
@@ -182,6 +202,9 @@ export default class InfoPanel {
       $scope.statsSources = ['cdem', 'cdsm'];
       $scope.statsSource = 'cdem';
 
+      $scope.viewshedOffset = 0;
+      $scope.maxViewshedOffset = MAX_VIEWSHED_OFFSET;
+
       $scope.mapZoomLevel = zoomLevel || 1;
 
       $scope.result = null;
@@ -200,10 +223,10 @@ export default class InfoPanel {
         return $scope.mode === 'profile' && $scope.status !== 'error';
       }
 
-      $scope.setGeometry = function(geometry, zoomLevel) {
+      $scope.setGeometry = function(geometry /*, zoomLevel */) {
         $scope.isDirty = true;
         $scope.geometry = geometry;
-        $scope.mapZoomLevel = zoomLevel;
+        // $scope.mapZoomLevel = zoomLevel;
       }
 
       // $scope.isDirty = function() {
@@ -220,10 +243,16 @@ export default class InfoPanel {
 
         $scope.status = 'loading';
 
-        if ($scope.mode === 'profile') {
-          $scope.doProfileRequest();
-        } else {
-          $scope.doStatisticsRequest();
+        switch ($scope.mode) {
+          case 'profile':
+            $scope.doProfileRequest();
+            break;
+          case 'statistics':
+            $scope.doStatisticsRequest();
+            break;
+          case 'viewshed':
+            $scope.doViewshedRequest();
+            break;
         }
 
         $scope.isDirty = false;
@@ -236,6 +265,11 @@ export default class InfoPanel {
         $scope.updateChart();
       }
 
+      $scope.handleViewshedOffsetChange = function() {
+        $scope.isDirty = true;
+        // $scope.doRequest();
+      }
+
       $scope.handleStepChange = function(stepFactor) {
 
         if ($scope.stepFactor == stepFactor) {
@@ -243,7 +277,8 @@ export default class InfoPanel {
         }
 
         $scope.stepFactor = stepFactor;
-        $scope.doRequest();
+        $scope.isDirty = true;
+        // $scope.doRequest();
 
       }
 
@@ -254,7 +289,8 @@ export default class InfoPanel {
         }
 
         $scope.statsSource = statsSource;
-        $scope.doRequest();
+        $scope.isDirty = true;
+        // $scope.doRequest();
 
       }
 
@@ -286,14 +322,12 @@ export default class InfoPanel {
           $scope.chart.data.datasets[1].tension = $scope.smoothProfile ? 0.4 : 0;
           $scope.chart.data.datasets[1].data = chartIntermediatePointData;
 
-          // $scope.chart.data.datasets[2].tension = $scope.smoothProfile ? 0.4 : 0;
           $scope.chart.data.datasets[2].data = chartNullElevationData;
 
           $scope.chart.data.datasets[3].tension = $scope.smoothProfile ? 0.4 : 0;
           $scope.chart.data.datasets[3].data = chartLineData;
 
           $scope.chart.options.scales.xAxes[0].ticks.suggestedMax = chartLineData[chartLineData.length - 1].x;
-          // $scope.chart.options.scales.xAxes[0].ticks.stepSize = chartLineData.length - 1;
 
           $scope.chart.update();
 
@@ -336,24 +370,20 @@ export default class InfoPanel {
                 xAxes: [{
                   type: 'linear',
                   display: true,
-                  // offset: true,
                   gridLines: {
                     display: true,
                     suggestedMax: chartLineData[chartLineData.length - 1].x,
                     min: 0,
-                    // stepSize: chartLineData.length - 1
                   },
                   ticks: {
-                    // max: chartLineData.length - 1,
                     min: 0,
-                    // stepSize: chartLineData.length - 1,
                     display: true
                   },
                   scaleLabel: {
                     display: true,
                     fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
                     fontSize: '14',
-                    labelString: xAxisLabel //'Distance cumulée le long du profil (en kilomètres)'
+                    labelString: xAxisLabel
                   },
                 }],
 
@@ -366,7 +396,7 @@ export default class InfoPanel {
                     display: true,
                     fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
                     fontSize: '14',
-                    labelString: yAxisLabel //'Élévation (en mètres)'
+                    labelString: yAxisLabel
                   }
                 }]
 
@@ -422,7 +452,6 @@ export default class InfoPanel {
 
       $scope.updateStatisticsTable = function() {
         let data = that.getResult();
-        console.debug(data.elevation.toto);
         $scope.result = data;
       }
 
@@ -430,10 +459,10 @@ export default class InfoPanel {
 
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
 
-        let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, geometry);
-
-        const geojson = arcgisToGeoJSON(latLongGeometry);
-        const wkt = toWKT(geojson);
+        let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
+        let geojson = arcgisToGeoJSON(latLongGeometry);
+        // roundGeoJsonCoordinates(geojson);
+        let wkt = toWKT(geojson);
 
         const url = `https://geogratis.gc.ca/services/elevation/${$scope.statsSource}/profile`;
 
@@ -442,12 +471,11 @@ export default class InfoPanel {
           steps: $scope.stepFactor
         };
 
-        $http.get(url, {
+        let options = {
+          params: params,
+        }
 
-          // withCredentials : true,
-          params: params
-
-        }).then(function successCallback(response) {
+        $http.get(url, options).then(function successCallback(response) {
 
           let data = response.data.reduce((acc, point, index, array) => {
 
@@ -471,7 +499,6 @@ export default class InfoPanel {
 
               const distance = Math.round(geometryEngine.distance(point1, point2, 'meters'));
 
-              // acc.push({ x: previousDistance + distance, y: point.altitude, vertex: point.vertex });
               acc.push({ ...point, ...{ distance: previousDistance + distance } });
 
             }
@@ -491,25 +518,65 @@ export default class InfoPanel {
 
       }
 
-      $scope.doStatisticsRequest = function () {
+      $scope.doViewshedRequest = function() {
 
-        let geom = $scope.geometry;
+        const { Point, SpatialReference, geometryEngine } = that.esriBundle;
+
+        let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
+        let geojson = arcgisToGeoJSON(latLongGeometry);
+
+        let level = $scope.mapZoomLevel;
+        let radius = LEVEL_TO_RADIUS_MAP[level] || LEVEL_TO_RADIUS_MAP[10];
 
         let params = {
-          level: $scope.mapZoomLevel,
-          // type: $scope.statsSource
+          geom: roundGeoJsonCoordinates(geojson),
+          offset: $scope.viewshedOffset,
+          level: level,
+          radius: radius
         };
+
+        let options = {
+          params: params,
+        }
+
+        const url = `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${$scope.statsSource}/viewshed.json`;
+
+        $http.get(url, options).then(function successCallback(response) {
+
+          let { data } = response;
+
+          $scope.status = 'loaded';
+
+          that.setResult(data);
+          $scope.updateStatisticsTable();
+
+        }, function errorCallback(response) {
+
+          $scope.status = 'error';
+
+        });
+
+      }
+
+      $scope.doStatisticsRequest = function () {
+
+        const { Point, SpatialReference, geometryEngine } = that.esriBundle;
+
+        let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
+        let geojson = arcgisToGeoJSON(latLongGeometry);
+
+        let params = {
+          geom: roundGeoJsonCoordinates(geojson),
+          level: $scope.mapZoomLevel
+        };
+
+        let options = {
+          params: params,
+        }
 
         const url = `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${$scope.statsSource}/stats.json`;
 
-        $http.get(url, {
-
-          // withCredentials : true,
-          params: params,
-          // responseType: 'json',
-          // transformResponse: function (data) { console.debug('data => ', data); return data; }
-
-        }).then(function successCallback(response) {
+        $http.get(url, options).then(function successCallback(response) {
 
           let { data } = response;
 
@@ -541,8 +608,6 @@ export default class InfoPanel {
     panel.body.prepend(infoPanelTemplate);
 
     panel.open();
-    // const header = infoPanel.header;
-    // header.$.prepend(this.mapApi.$compile(DOWNLOAD_BUTTON_TEMPLATE));
 
     $('.dialog-container').addClass('rv-elevation-dialog-container');
 
