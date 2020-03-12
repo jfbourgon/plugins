@@ -40,6 +40,7 @@ export class UI {
   private initialDrawToolsStrings: any;
   private drawEndHandler: any;
   private editEndHandler: any;
+  private moveEndHandler: any;
   private unloadMapHandler: any;
 
   constructor (mapApi: any, config: any) {
@@ -115,7 +116,7 @@ export class UI {
           viewshed: {
               name: 'viewshed',
               label: 'plugins.elevation.toolbar.viewshed.label',
-              icon: 'M23.5,17L18.5,22L15,18.5L16.5,17L18.5,19L22,15.5L23.5,17M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9M12,4.5C17,4.5 21.27,7.61 23,12C22.75,12.65 22.44,13.26 22.08,13.85C21.5,13.5 20.86,13.25 20.18,13.12L20.82,12C19.17,8.64 15.76,6.5 12,6.5C8.24,6.5 4.83,8.64 3.18,12C4.83,15.36 8.24,17.5 12,17.5L13.21,17.43C13.07,17.93 13,18.46 13,19V19.46L12,19.5C7,19.5 2.73,16.39 1,12C2.73,7.61 7,4.5 12,4.5Z',
+              icon: 'M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z',
               tooltip: 'plugins.elevation.toolbar.viewshed.tooltip',
               active: false,
               visible: () => true,
@@ -165,11 +166,13 @@ export class UI {
 
       const handleMapUnload = function(e) {
         that.editEndHandler.remove();
+        that.moveEndHandler.remove();
         that.drawEndHandler.remove();
         that.unloadMapHandler.remove();
       }
 
       that.editEndHandler = this.esriEditToolbar.on('vertex-move-stop', this.handleEditEnd.bind(this));
+      that.moveEndHandler = this.esriEditToolbar.on('graphic-move-stop', this.handleEditEnd.bind(this));
       that.drawEndHandler = this.esriDrawToolbar.on('draw-complete', this.handleDrawEnd.bind(this));
 
       that.unloadMapHandler = this.mapApi.esriMap.on('unload', handleMapUnload);
@@ -381,7 +384,7 @@ export class UI {
   handleEditEnd(e) {
 
     let { graphic: { geometry }, target: { map }, ...rest } = e;
-    this.infoPanel.updateGeometry(geometry, map.getZoom());
+    this.infoPanel.updateGeometry(geometry /*, map.getZoom() */);
 
   }
 

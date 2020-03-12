@@ -1,4 +1,4 @@
-// panels templates: collaboration
+
 export const TOOLBAR_TEMPLATE = `
     <div class="rv-button-group hover rv-whiteframe-z2 rv-mapnav-elevation-content hidden" ng-controller="ElevationToolbarCtrl as ctrl">
         <!-- <md-button class="md-warn md-raised" style="position: absolute; right: 35px; top: -7px;">Stop Editing</md-button> -->
@@ -102,9 +102,10 @@ export const PROFILE_INFO_PANEL_TEMPLATE = ` 
             </div>
 
             <md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>
-            <md-button id="rv-elevation-retry-btn" class="md-raised" ng-click="refresh()" ng-if="isDirty">{{ 'plugins.elevation.infoPanel.refreshBtn.label' | translate }}</md-button>
 
         </div>
+
+        <md-button class="md-primary" id="rv-elevation-refresh-btn" ng-click="refresh()" ng-disabled="!isDirty">{{ 'plugins.elevation.infoPanel.refreshChartBtn.label' | translate }}</md-button>
 
         <md-progress-linear md-mode="indeterminate" ng-disabled="status !== 'loading'"></md-progress-linear>
 
@@ -147,7 +148,7 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
 
         </div>
 
-        <div class="content" style="overflow-y: auto; margin-right: 10px; margin-bottom: 10px;">
+        <div class="content" style="margin-right: 15px; margin-bottom: 0px;">
 
             <div class="rv-elevation-infopanel-statistics-table" ng-class="{ 'disabled': status === 'loading', 'hidden': !isStatisticsTableVisible()}">
 
@@ -236,15 +237,91 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
 
             </div>
 
-            <md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>
-            <md-button id="rv-elevation-retry-btn" class="md-raised" ng-click="refresh()" ng-if="isDirty">{{ 'plugins.elevation.infoPanel.refreshBtn.label' | translate }}</md-button>
+            <!--<md-button id="rv-elevation-retry-btn" class="md-raised md-warn" ng-click="refresh()" ng-if="status === 'error'">{{ 'plugins.elevation.infoPanel.retryBtn.label' | translate }}</md-button>-->
 
         </div>
+
+        <md-button class="md-primary" id="rv-elevation-refresh-btn" ng-click="refresh()" ng-disabled="!isDirty">{{ 'plugins.elevation.infoPanel.refreshStatsBtn.label' | translate }}</md-button>
 
         <md-progress-linear md-mode="indeterminate" ng-disabled="status !== 'loading'"></md-progress-linear>
 
     </div>
 `;
+
+
+export const VIEWSHED_INFO_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-panel" ng-controller="InfoPanelCtrl" class="body">
+
+        <div class="toolbar">
+
+            <md-menu-bar class="menubar">
+
+                <md-menu md-position-mode="target-left target">
+                    <md-button
+                        aria-label="Menu"
+                        ng-disabled="status === 'loading'"
+                        class="black"
+                        style="margin: 0px;"
+                        ng-click="$mdOpenMenu($event)"
+                    >
+                        {{ ('plugins.elevation.infoPanel.statsSource.' + statsSource) | translate }}
+                        <md-tooltip>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate }}</md-tooltip>
+                    </md-button>
+                    <md-menu-content class="rv-menu rv-dense rv-elevation-stats-source-menu">
+                        <md-menu-item ng-disabled={true}>
+                            <span style='flex-basis: auto; overflow-wrap:normal; font-size: 0.7rem; color: #aaa;'>{{ 'plugins.elevation.infoPanel.statsSourceMenuBtn.tooltip' | translate | uppercase }}</span>
+                        </md-menu-item>
+                        <md-menu-divider class="rv-lg"></md-menu-divider>
+                        <md-menu-item ng-repeat="source in statsSources">
+                            <md-button ng-click="handleStatsSourceChange(source)">
+                                <span style='flex-basis: auto; overflow-wrap:normal;'>{{ ('plugins.elevation.infoPanel.statsSource.' + source) | translate }}</span>
+                                <md-icon md-svg-icon="action:done" ng-if="source === statsSource"></md-icon>
+                            </md-button>
+                        </md-menu-item>
+                    </md-menu-content>
+                </md-menu>
+
+            </md-menu-bar>
+
+        </div>
+
+        <hr/>
+
+        <div class="content" style="height: auto;">
+
+            <div style="display: flex; flex: 1; flex-direction: column; width: 100%; padding: 20px 20px 0px 20px;">
+
+                <label>VERTICAL OFFSET (above surface, in meters)</label>
+
+                <md-slider-container flex style="margin-top: 0px;">
+                    <md-slider flex ng-disabled="status === 'loading'" min="0" max="{{maxViewshedOffset}}" step="1" ng-change="handleViewshedOffsetChange()" ng-model="viewshedOffset" class="md-primary"></md-slider>
+                    <input type="number" min="0" max="{{maxViewshedOffset}}" style="height: 48px; line-height: 48px; text-align: center; border: none;" ng-model="viewshedOffset" ng-change="handleViewshedOffsetChange()"/>
+                    </md-slider-container>
+                <div style="text-align: center; position: relative; top: -5px;"></div>
+
+            </div>
+
+      </div>
+
+      <md-button class="md-primary" id="rv-elevation-refresh-btn" ng-click="refresh()" ng-disabled="!isDirty">{{ 'plugins.elevation.infoPanel.refreshViewshedBtn.label' | translate }}</md-button>
+
+      <md-progress-linear md-mode="indeterminate" ng-disabled="status !== 'loading'"></md-progress-linear>
+
+    </div>
+`
+
+export const INFO_TIP_PANEL_TEMPLATE = ` 
+    <div id="elevation-rv-info-tip" class="body" ng-controller="InfoTipPanelCtrl as ctrl">
+        <div class="content">
+            {{ 'plugins.elevation.infoTipPanel.bodyText' | translate }}
+        </div>
+        <div class="footer">
+            <md-button class="black md-ink-ripple md-primary" ng-click="ctrl.dismiss()">
+                {{ 'plugins.elevation.infoTipPanel.okBtn.label' | translate }}
+            </md-button>
+        </div>
+    </div>
+`
 
 export const DOWNLOAD_BUTTON_TEMPLATE = `
         <md-button
@@ -262,38 +339,4 @@ export const DOWNLOAD_BUTTON_TEMPLATE = `
                 </svg>
             </md-icon>
         </md-button>
-`
-
-export const VIEWSHED_INFO_PANEL_TEMPLATE = ` 
-    <div id="elevation-rv-info-panel" ng-controller="InfoPanelCtrl" class="body">
-
-        <div class="toolbar">
-
-            <md-menu-bar class="menubar">
-                Menu
-            </md-menu-bar>
-
-        </div>
-
-        <div class="content" style="overflow-y: auto; margin-right: 10px; margin-bottom: 10px;">
-            Content
-        </div>
-
-    </div>
-`
-
-
-
-
-export const INFO_TIP_PANEL_TEMPLATE = ` 
-    <div id="elevation-rv-info-tip" class="body" ng-controller="InfoTipPanelCtrl as ctrl">
-        <div class="content">
-            {{ 'plugins.elevation.infoTipPanel.bodyText' | translate }}
-        </div>
-        <div class="footer">
-            <md-button class="black md-ink-ripple md-primary" ng-click="ctrl.dismiss()">
-                {{ 'plugins.elevation.infoTipPanel.okBtn.label' | translate }}
-            </md-button>
-        </div>
-    </div>
 `

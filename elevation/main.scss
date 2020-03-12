@@ -47,7 +47,6 @@
     flex: 1;
     overflow-y: auto;
     margin: 15px;
-
   }
 
   .footer {
@@ -71,13 +70,37 @@
   display: flex;
   flex: 1;
   width: 90%;
-  max-width: 700px;
-  height: 500px;
+
   left: auto;
   top: auto;
   right: auto;
   bottom: auto;
   margin: 0;
+
+  top: 50%;
+  left: 50%;
+
+  hr {
+    margin: 0px 15px 0px 15px;
+    height: 1px;
+    border: none;
+    background-color: #ccc;
+    color: #ccc;
+  }
+
+  &.rv-elevation-dialog-small {
+    max-width: 500px;
+    // height: 200px;
+    margin-left: -250px;
+    // margin-top: -100px;
+  }
+
+  &.rv-elevation-dialog-large {
+    max-width: 700px;
+    // height: 550px;
+    margin-left: -350px;
+    margin-top: -250px;
+  }
 
   &.rv-elevation-dialog-hidden {
     visibility: hidden;
@@ -153,18 +176,27 @@
   .content {
 
     // border: solid 1px blue;
-    justify-content: center;
+    // justify-content: center;
     align-items: center;
     // padding: 0 8px 8px !important;
     display: flex;
     flex: 1;
+    flex-direction: column;
+    height: 400px;
+
+    label {
+      font-weight: 500;
+      font-size: 14px;
+    }
 
     .rv-elevation-infopanel-chart {
 
       align-self: stretch;
       flex: 1;
-      margin: 0px 15px 15px 15px;
+      margin: 0px 15px 5px 15px;
       background-color: #eee;
+      // overflow-y: hidden;
+      // height: 400px;
 
       &.disabled {
         opacity: 0.3;
@@ -176,9 +208,11 @@
 
       flex: 1;
       align-self: stretch;
-      margin: 0px 5px 15px 15px;
+      margin: 0px 5px 5px 15px;
       justify-content: center;
       align-items: center;
+      overflow-y: auto;
+      // height: 400px;
 
       &.disabled {
         opacity: 0.3;
@@ -186,7 +220,7 @@
 
       table.md-table {
 
-        margin-bottom: 18px;
+        margin-bottom: 0px;
         background-color: #eee;
 
         thead.md-head {
@@ -297,6 +331,12 @@
     background: rgba(0, 0, 0, 0.1) !important;
   }
 
+}
+
+#rv-elevation-refresh-btn {
+  // position: absolute;
+  margin: 5px 15px 5px 15px;
+  padding: 0 10px 0 10px;
 }
 
 // HACK : this should be set in RV main stylesheet

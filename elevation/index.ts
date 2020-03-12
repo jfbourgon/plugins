@@ -179,7 +179,7 @@ ElevationServicePlugin.prototype.translations = {
         tooltip: 'Number of interpolated points'
       },
       statsSourceMenuBtn: {
-        tooltip: 'Elevation Type'
+        tooltip: 'Elevation Data Source'
       },
       statsSource: {
         cdem: 'Elevation Model (CDEM)',
@@ -216,8 +216,14 @@ ElevationServicePlugin.prototype.translations = {
       retryBtn: {
         label: 'Try again'
       },
-      refreshBtn: {
-        label: 'Refresh'
+      refreshStatsBtn: {
+        label: 'Refresh statistics'
+      },
+      refreshChartBtn: {
+        label: 'Refresh chart'
+      },
+      refreshViewshedBtn: {
+        label: 'Refresh viewshed'
       },
       chart: {
         label: 'Elevation Profile',
@@ -264,7 +270,7 @@ ElevationServicePlugin.prototype.translations = {
         tooltip: 'Nombre de points à interpoler'
       },
       statsSourceMenuBtn: {
-        tooltip: 'Type de données d\'élévation'
+        tooltip: 'Source des données d\'élévation'
       },
       statsSource: {
         cdem: 'Modèle d\'élévation (CDEM)',
@@ -303,6 +309,15 @@ ElevationServicePlugin.prototype.translations = {
       },
       refreshBtn: {
         label: 'Actualiser'
+      },
+      refreshStatsBtn: {
+        label: 'Actualiser les statistiques'
+      },
+      refreshChartBtn: {
+        label: 'Actualiser le profil'
+      },
+      refreshViewshedBtn: {
+        label: 'Actualiser la zone de visibilité'
       },
       chart: {
         label: 'Profil d\'élévation',
