@@ -142,24 +142,53 @@ export default class InfoPanel {
     return this.mapApi.esriMap._layers[RESULTS_LAYER_ID];
   }
 
-  updateGraphic(geometry: any) {
+  updateViewshedGraphic(geometry: any, center: any, radius: number) {
 
     this.graphicsLayer.clear();
 
-    let { Graphic, SimpleFillSymbol, SimpleLineSymbol, Color, Polygon} = this.esriBundle;
+    let { Graphic, SimpleFillSymbol, SimpleLineSymbol, Color, Polygon, Circle } = this.esriBundle;
 
     let outlineColor = new Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR);
     let fillColor = new Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR);
 
+    let radiusOutlineColor = new Color.fromHex('#000');
+    let radiusFillColor = new Color.fromString('rgba(0, 0, 0, 0.1)');
+
     let drawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, outlineColor, 1);
     let drawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, fillColor);
 
+    let radiusDrawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SHORTDASH, radiusOutlineColor, 2);
+    let radiusDrawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, radiusDrawLineSymbol, radiusFillColor);
+
     let polygon = new Polygon(geometry);
 
-    let graphic = new Graphic(polygon, drawFillSymbol);
-    let extent = polygon.getExtent();
+    // console.debug(center);
 
-    this.graphicsLayer.add(graphic);
+    // build circle
+    var step = 2 * Math.PI / 360;
+    var h = center.x;
+    var k = center.y;
+    var r = radius;
+
+    let ring = [];
+
+    for ( var theta = 0;  theta < 2 * Math.PI; theta += step ) {
+      var x = h + r * Math.cos(theta);
+      var y = k - r * Math.sin(theta);
+      ring.push([x, y]);
+    }
+    let circle = new Polygon([ring]);
+
+    console.debug(circle);
+
+    let polygonGraphic = new Graphic(polygon, drawFillSymbol);
+    let radiusGraphic = new Graphic(circle, radiusDrawFillSymbol);
+
+
+    this.graphicsLayer.add(polygonGraphic);
+    this.graphicsLayer.add(radiusGraphic);
+
+    let extent = polygon.getExtent();
     this.mapApi.esriMap.setExtent(extent, true);
 
   }
@@ -551,8 +580,10 @@ export default class InfoPanel {
         let level = $scope.mapZoomLevel;
         let radius = ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[level] || ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[10];
 
+        let center = roundGeoJsonCoordinates(geojson);
+
         let params = {
-          geom: roundGeoJsonCoordinates(geojson),
+          geom: center,
           offset: $scope.viewshedOffset,
           level: level,
           radius: radius
@@ -583,8 +614,9 @@ export default class InfoPanel {
 
           let mapProjection = map.spatialReference;
           let projectedGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(mapProjection, latLongGeometry);
+          // let projectedCenter = (<any>RAMP).GAPI.proj.localProjectGeometry(mapProjection, center);
 
-          that.updateGraphic(projectedGeometry);
+          that.updateViewshedGraphic(projectedGeometry, $scope.geometry, radius);
 
         }, function errorCallback(response) {
 
