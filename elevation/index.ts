@@ -1,12 +1,6 @@
 // import { UIManager } from './ui-manager';
 import { UI } from './ui';
 
-const PROFILE_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/profile';
-const STATISTICS_SERVICE_DEFAULT_URL = 'https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${source}/stats.json';
-const VIEWSHED_SERVICE_DEFAULT_URL = 'https://maps.geogratis.gc.ca/elevation/${source}/profile';
-
-const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm'];
-
 export default class ElevationServicePlugin {
 
   private mapApi;
@@ -89,7 +83,7 @@ export default class ElevationServicePlugin {
     conf.services = services;
     conf.language = this._RV.getCurrentLang();
 
-    console.debug(conf);
+    // console.debug(conf);
 
     return conf;
 
@@ -229,7 +223,8 @@ ElevationServicePlugin.prototype.translations = {
         label: 'Elevation Profile',
         xAxisLabel: 'Cumulative distance along profile (kilometers)',
         yAxisLabel: 'Elevation (meters)'
-      }
+      },
+      viewshedOffsetLabel: 'VERTICAL OFFSET (above surface, in meters)'
     }
 
   },
@@ -323,7 +318,8 @@ ElevationServicePlugin.prototype.translations = {
         label: 'Profil d\'élévation',
         xAxisLabel: 'Distance cumulée le long du profil (en kilomètres)',
         yAxisLabel: 'Élévation (en mètres)'
-      }
+      },
+      viewshedOffsetLabel: 'HAUTEUR DU POINT DE VUE (au-dessus de la surface, en mètres)'
     }
 
   }

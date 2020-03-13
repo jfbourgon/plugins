@@ -272,7 +272,13 @@
     }
 
     #rv-elevation-retry-btn {
+
       position: absolute;
+
+      &.disabled {
+        opacity: 0.4;
+      }
+
     }
 
   }
@@ -333,10 +339,21 @@
 
 }
 
+.rv-elevation-retry-btn-container {
+  display: flex; align-items: center; justify-content: center; position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: rgba(255, 255, 255, 0.9);
+}
+
+
 #rv-elevation-refresh-btn {
+
   // position: absolute;
   margin: 5px 15px 5px 15px;
   padding: 0 10px 0 10px;
+
+  &.disabled {
+    opacity: 0.4;
+  }
+
 }
 
 // HACK : this should be set in RV main stylesheet

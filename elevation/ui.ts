@@ -1,16 +1,12 @@
 import storage from './simple-storage';
 
-import { TOOLBAR_TEMPLATE } from './templates';
 import InfoPanel from './info-panel';
 import InfoTipPanel from './infotip-panel';
 
-const GRAPHICS_LAYER_ID = 'graphicsRvElevation';
+import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
+import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
-// const INFO_PANEL_ID = 'elevationInfoPanel';
-// const INFO_TIP_PANEL_ID = 'elevationInfoTipPanel';
-
-const DEFAULT_DRAW_FILL_SYMBOL_COLOR = 'rgba(217,205,229, 0.5)';
-const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';
+import { TOOLBAR_TEMPLATE } from './templates';
 
 export class UI {
 
@@ -78,7 +74,8 @@ export class UI {
 
     // this.esriDrawToolbar = drawToolbar
 
-    this.mapApi.layersObj.addLayer(GRAPHICS_LAYER_ID);
+    this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
+    this.mapApi.layersObj.addLayer(DRAWING_LAYER_ID);
 
   }
 
@@ -336,8 +333,12 @@ export class UI {
 
   }
 
-  get graphicsLayer(): any {
-    return this.mapApi.esriMap._layers[GRAPHICS_LAYER_ID];
+  get drawingLayer(): any {
+    return this.mapApi.esriMap._layers[DRAWING_LAYER_ID];
+  }
+
+  get resultsLayer(): any {
+    return this.mapApi.esriMap._layers[RESULTS_LAYER_ID];
   }
 
   onHideInfoPanel(e) {
@@ -415,13 +416,14 @@ export class UI {
     this.clearGraphics();
 
     this.activeGraphic = graphic;
-    this.graphicsLayer.add(graphic);
+    this.drawingLayer.add(graphic);
 
   }
 
   clearGraphics() {
     this.activeGraphic = null;
-    this.graphicsLayer.clear();
+    this.drawingLayer.clear();
+    this.resultsLayer.clear();
   }
 
   show() {
@@ -505,7 +507,8 @@ export class UI {
 
     this.$toolbar = null;
 
-    this.graphicsLayer.clear();
+    this.drawingLayer.clear();
+    this.resultsLayer.clear();
 
     this.mapApi.layersObj._identifyMode = this.identifyMode;
 
@@ -514,8 +517,7 @@ export class UI {
   destroy() {
 
     this.hide();
-
-    this.mapApi.layersObj.removeLayer(GRAPHICS_LAYER_ID);
+    this.mapApi.layersObj.removeLayer(DRAWING_LAYER_ID);
 
   }
 

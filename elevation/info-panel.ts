@@ -1,6 +1,6 @@
 
 import { stringify as toWKT } from 'wellknown';
-import { arcgisToGeoJSON } from '@esri/arcgis-to-geojson-utils';
+import { arcgisToGeoJSON, geojsonToArcGIS } from '@esri/arcgis-to-geojson-utils';
 
 const Draggabilly = require('draggabilly');
 
@@ -9,23 +9,16 @@ const Chart = require('chart.js');
 
 const numeral = require('numeral');
 
-import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates'
+import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates';
 
-const LEVEL_TO_RADIUS_MAP = {
-  10: 100000,
-  11: 51200,
-  12: 25600,
-  13: 12800,
-  14: 6400,
-  15: 3200,
-  16: 1600,
-  17: 800
-}
+import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
+import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
-const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
-const MAX_VIEWSHED_OFFSET = 100;
+import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, MAX_VIEWSHED_OFFSET } from './constants'
+// import DEFAULT_COORDINATE_ROUNDING_SCALE from './constants';
+// import MAX_VIEWSHED_OFFSET from './constants';
 
-const INFO_PANEL_ID = 'elevationInfoPanel';
+import { INFO_PANEL_ID } from './constants';
 
 // Create dummy "ISO" locale to format numbers (regardless of user's locale)
 numeral.register('locale', 'iso', {
@@ -113,6 +106,8 @@ export default class InfoPanel {
 
     this.result = null;
 
+    this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
+
   }
 
   setResult (result) {
@@ -126,6 +121,7 @@ export default class InfoPanel {
   prepareDownload () {
 
     const downloadFileName = this.mode;
+
     return {
       downloadFileName,
       data: JSON.stringify(this.result)
@@ -139,6 +135,32 @@ export default class InfoPanel {
     const scope = ctrl.scope();
 
     scope.setGeometry(geometry, /*, zoomLevel */);
+
+  }
+
+  get graphicsLayer(): any {
+    return this.mapApi.esriMap._layers[RESULTS_LAYER_ID];
+  }
+
+  updateGraphic(geometry: any) {
+
+    this.graphicsLayer.clear();
+
+    let { Graphic, SimpleFillSymbol, SimpleLineSymbol, Color, Polygon} = this.esriBundle;
+
+    let outlineColor = new Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR);
+    let fillColor = new Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR);
+
+    let drawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, outlineColor, 1);
+    let drawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, fillColor);
+
+    let polygon = new Polygon(geometry);
+
+    let graphic = new Graphic(polygon, drawFillSymbol);
+    let extent = polygon.getExtent();
+
+    this.graphicsLayer.add(graphic);
+    this.mapApi.esriMap.setExtent(extent, true);
 
   }
 
@@ -521,12 +543,13 @@ export default class InfoPanel {
       $scope.doViewshedRequest = function() {
 
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
+        const { esriMap: map } = that.mapApi;
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
 
         let level = $scope.mapZoomLevel;
-        let radius = LEVEL_TO_RADIUS_MAP[level] || LEVEL_TO_RADIUS_MAP[10];
+        let radius = ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[level] || ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[10];
 
         let params = {
           geom: roundGeoJsonCoordinates(geojson),
@@ -548,7 +571,20 @@ export default class InfoPanel {
           $scope.status = 'loaded';
 
           that.setResult(data);
-          $scope.updateStatisticsTable();
+
+          let latLongGeometry = geojsonToArcGIS(data);
+          // let latLongGeometry = new Point(10, 20, new SpatialReference({ wkid: 4326 }));
+
+          // let testGeom = latLongGeometry;
+          // testGeom.geometry.rings = [ latLongGeometry.geometry.rings[0].map((ring, i) => {
+          //   let [a, b] = ring;
+          //   return [a, b];
+          // }) ];
+
+          let mapProjection = map.spatialReference;
+          let projectedGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(mapProjection, latLongGeometry);
+
+          that.updateGraphic(projectedGeometry);
 
         }, function errorCallback(response) {
 
@@ -563,6 +599,7 @@ export default class InfoPanel {
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
+        console.debug(JSON.stringify($scope.geometry));
         let geojson = arcgisToGeoJSON(latLongGeometry);
 
         let params = {
