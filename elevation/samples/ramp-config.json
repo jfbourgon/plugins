@@ -260,6 +260,16 @@
     },
     "plugins": {
       "elevation": {
+        "services": {
+          "profile": {
+            "sources": [
+              "cdem"
+            ]
+          },
+          "statistics": {
+            "url": "http://statistics.canada/{{source}}"
+          }
+        }
       }
     }
 }

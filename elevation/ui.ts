@@ -72,8 +72,6 @@ export class UI {
 
     });
 
-    // this.esriDrawToolbar = drawToolbar
-
     this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
     this.mapApi.layersObj.addLayer(DRAWING_LAYER_ID);
 
@@ -176,21 +174,6 @@ export class UI {
 
   }
 
-  // clearActiveTool() {
-
-  //   let { controls, esriBundle, mapApi } = this;
-
-  //   Object.keys(controls).forEach(k => controls[k].active = false);
-
-  //   esriBundle.i18n.toolbars.draw = this.initialDrawToolsStrings;
-
-  //   this.esriDrawToolbar.deactivate();
-  //   this.esriEditToolbar.deactivate();
-
-  //   mapApi.layersObj._identifyMode = this.identifyMode;
-
-  // }
-
   getActiveGraphic() {
     return this.activeGraphic;
   }
@@ -240,8 +223,6 @@ export class UI {
     const mapApi = this.mapApi;
     const esriBundle = this.esriBundle;
 
-    // const controls = this.controls;
-
     let drawOptions = {
       drawTime: 0,
       showTooltips: true,
@@ -289,29 +270,6 @@ export class UI {
       controls[name] && (controls[name].active = true);
       this.selectedTool = name;
 
-      // this.clearGraphics();
-      // this.esriEditToolbar.deactivate();
-
-      // esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
-
-      // let esriToolNameToActivate = name === 'profile' ? 'polyline' : 'polygon';
-
-      // // activate the right tool from the ESRI draw toolbar
-      // this.esriDrawToolbar.activate(esriBundle.drawToolbar[esriToolNameToActivate.toUpperCase()], drawOptions);
-
-      // this.esriDrawToolbar.setLineSymbol(this.symbols.line);
-      // this.esriDrawToolbar.setFillSymbol(this.symbols.polygon);
-
-      // controls[name] && (controls[name].active = true);
-
-      // if (!this.identifyMode) {
-      //   this.identifyMode = mapApi.layersObj._identifyMode;
-      // }
-
-      // mapApi.layersObj._identifyMode = [];
-
-      // this.selectedTool = name;
-
     } else {
 
       this.selectedTool = null;
@@ -352,24 +310,19 @@ export class UI {
     this.deactivateEditingMode();
 
     panel.destroy();
-    // this.clearActiveTool();
-
-    // this.setActiveTool('edit');
 
   }
 
   showInfoPanel(geometry, zoomLevel) {
 
-    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.selectedTool, null);
+    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.selectedTool, { services: this.config.services[this.selectedTool] });
 
     infoPanel.show(geometry, zoomLevel);
     infoPanel.panel.closing.subscribe(this.onHideInfoPanel.bind(this));
 
     this.infoPanel = infoPanel;
 
-    // if (this.selectedTool !== 'viewshed') {
-      this.activateEditingMode();
-    // }
+    this.activateEditingMode();
 
   }
 
@@ -446,43 +399,6 @@ export class UI {
       let infoTipPanel = new InfoTipPanel(this.mapApi);
       infoTipPanel.show();
 
-      // const infoTipPanel = this.mapApi.panels.create(INFO_TIP_PANEL_ID, 1); // 1 is for creating a modal dialog
-
-      // // infoTipPanel.header.title = 'Tooltip';
-
-      // // const close = infoTipPanel.header.closeButton;
-
-      // // close.removeClass('primary');
-      // // close.addClass('black md-ink-ripple');
-
-      // infoTipPanel.element.addClass('ag-theme-material mobile-fullscreen tablet-fullscreen rv-elevation-dialog-hidden');
-
-      // infoTipPanel.element.css({
-      //   top: '50%',
-      //   left: '50%',
-      //   width: '480px',
-      //   height: '360px',
-      //   marginLeft: '-240px',
-      //   marginTop: '-180px'
-      // });
-
-      // const that = this;
-
-      // infoTipPanel.closing.subscribe(e => {
-
-      //   const { panel, code } = e;
-
-      //   panel.element.addClass('hidden');
-      //   $('.dialog-container').removeClass('rv-elevation-dialog-container');
-
-      //   // storage('skipInfoTipDialog', 'true')
-
-      //   panel.destroy();
-
-      // });
-
-      // infoTipPanel.open();
-
     }
 
   }
@@ -530,18 +446,12 @@ UI.prototype.translations = {
           addPoint: 'Cliquer pour placer le point de vue',
         },
         profile: {
-          // addPoint: 'Click to add a point',
           complete: 'Double-click to complete the profile',
-          // finish: 'Double-click to finish',
-          // freehand: 'Press down to start and let go to finish',
           resume: 'Click to add point to the profile',
           start: 'Click to start drawing the profile'
         },
         statistics: {
-          // addPoint: 'Cliquer pour ajouter un point',
           complete: 'Double-click to calculate statistics',
-          // finish: 'Double-cliquer pour finir',
-          // freehand: 'Appuyer pour commencer et laissez aller pour finir',
           resume: 'Click to add point',
           start: 'Click to start the zone'
         }
@@ -553,18 +463,12 @@ UI.prototype.translations = {
           addPoint: 'Cliquer pour placer le point de vue',
         },
         profile: {
-          // addPoint: 'Cliquer pour ajouter un point',
           complete: 'Double-cliquer pour générer le profil',
-          // finish: 'Double-cliquer pour finir',
-          // freehand: 'Appuyer pour commencer et laissez aller pour finir',
           resume: 'Cliquer pour ajouter un point au profil',
           start: 'Cliquer pour débuter le tracé du profil'
         },
         statistics: {
-          // addPoint: 'Cliquer pour ajouter un point',
           complete: 'Double-cliquer pour calculer les statistiques',
-          // finish: 'Double-cliquer pour finir',
-          // freehand: 'Appuyer pour commencer et laissez aller pour finir',
           resume: 'Cliquer pour ajouter un point',
           start: 'Cliquer pour débuter la zone'
         }

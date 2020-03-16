@@ -15,8 +15,6 @@ import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
 import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
 import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, MAX_VIEWSHED_OFFSET } from './constants'
-// import DEFAULT_COORDINATE_ROUNDING_SCALE from './constants';
-// import MAX_VIEWSHED_OFFSET from './constants';
 
 import { INFO_PANEL_ID } from './constants';
 
@@ -29,6 +27,21 @@ numeral.register('locale', 'iso', {
 });
 
 numeral.locale('iso');
+
+const buildCircle = (x, y, radius, numPoints = 360) => {
+
+  var step = 2 * Math.PI / numPoints;
+  let coordinates = [];
+
+  for ( var theta = 0;  theta < 2 * Math.PI; theta += step ) {
+    var h = x + radius * Math.cos(theta);
+    var k = y - radius * Math.sin(theta);
+    coordinates.push([h, k]);
+  }
+
+  return coordinates;
+
+}
 
 const roundNumber = (num, scale) => {
 
@@ -85,6 +98,7 @@ export default class InfoPanel {
   public translations: any;
 
   private mapApi: any;
+  private services: any;
   private esriBundle: any;
   private mode: any;
   private options: any;
@@ -100,6 +114,7 @@ export default class InfoPanel {
 
     this.mapApi = mapApi;
     this.esriBundle = esriBundle;
+    this.services = options.services;
 
     this.mode = mode;
     this.options = options;
@@ -107,6 +122,8 @@ export default class InfoPanel {
     this.result = null;
 
     this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
+
+    // console.debug('services => ', this.services);
 
   }
 
@@ -157,39 +174,24 @@ export default class InfoPanel {
     let drawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, outlineColor, 1);
     let drawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, fillColor);
 
-    let radiusDrawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SHORTDASH, radiusOutlineColor, 2);
+    let radiusDrawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_DOT, radiusOutlineColor, 2);
     let radiusDrawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, radiusDrawLineSymbol, radiusFillColor);
 
     let polygon = new Polygon(geometry);
 
-    // console.debug(center);
-
-    // build circle
-    var step = 2 * Math.PI / 360;
-    var h = center.x;
-    var k = center.y;
-    var r = radius;
-
-    let ring = [];
-
-    for ( var theta = 0;  theta < 2 * Math.PI; theta += step ) {
-      var x = h + r * Math.cos(theta);
-      var y = k - r * Math.sin(theta);
-      ring.push([x, y]);
-    }
+    let ring = buildCircle(center.x, center.y, radius);
     let circle = new Polygon([ring]);
-
-    console.debug(circle);
 
     let polygonGraphic = new Graphic(polygon, drawFillSymbol);
     let radiusGraphic = new Graphic(circle, radiusDrawFillSymbol);
 
-
     this.graphicsLayer.add(polygonGraphic);
     this.graphicsLayer.add(radiusGraphic);
 
-    let extent = polygon.getExtent();
-    this.mapApi.esriMap.setExtent(extent, true);
+    let polygonExtent = polygon.getExtent();
+    let circleExtent = circle.getExtent();
+
+    this.mapApi.esriMap.setExtent(polygonExtent, true);
 
   }
 
@@ -250,8 +252,11 @@ export default class InfoPanel {
       $scope.stepFactor = 20;
       $scope.smoothProfile = true;
 
-      $scope.statsSources = ['cdem', 'cdsm'];
-      $scope.statsSource = 'cdem';
+      $scope.services = that.services;
+      // console.debug(Object.keys(that.services));
+      // $scope.statsSources = ['cdem', 'cdsm'];
+      $scope.statsSources = Object.keys(that.services);
+      $scope.statsSource =  $scope.statsSources[0];
 
       $scope.viewshedOffset = 0;
       $scope.maxViewshedOffset = MAX_VIEWSHED_OFFSET;
@@ -260,7 +265,6 @@ export default class InfoPanel {
 
       $scope.result = null;
       $scope.isDirty = false;
-      // that.setResult(null);
 
       $scope.getFormattedValue = function(value, format = '0,0.00') {
         return numeral(value).format(format);
@@ -277,12 +281,7 @@ export default class InfoPanel {
       $scope.setGeometry = function(geometry /*, zoomLevel */) {
         $scope.isDirty = true;
         $scope.geometry = geometry;
-        // $scope.mapZoomLevel = zoomLevel;
       }
-
-      // $scope.isDirty = function() {
-      //   return that.isDirty;
-      // }
 
       $scope.refresh = function() {
         $scope.doRequest();
@@ -318,7 +317,6 @@ export default class InfoPanel {
 
       $scope.handleViewshedOffsetChange = function() {
         $scope.isDirty = true;
-        // $scope.doRequest();
       }
 
       $scope.handleStepChange = function(stepFactor) {
@@ -329,7 +327,6 @@ export default class InfoPanel {
 
         $scope.stepFactor = stepFactor;
         $scope.isDirty = true;
-        // $scope.doRequest();
 
       }
 
@@ -341,7 +338,6 @@ export default class InfoPanel {
 
         $scope.statsSource = statsSource;
         $scope.isDirty = true;
-        // $scope.doRequest();
 
       }
 
@@ -385,6 +381,7 @@ export default class InfoPanel {
         } else {
 
           // Very hacky way of getting translated strings from plugin translations
+
           const xAxisLabel = $('#elevation-chart-x-axis-label').text();
           const yAxisLabel = $('#elevation-chart-y-axis-label').text();
 
@@ -402,7 +399,7 @@ export default class InfoPanel {
             type: 'line',
             options: {
 
-              onClick: (e, data) => console.debug('click on chart => ', e, data),
+              // onClick: (e, data) => console.debug('click on chart => ', e, data),
 
               maintainAspectRatio: true,
 
@@ -512,10 +509,9 @@ export default class InfoPanel {
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
-        // roundGeoJsonCoordinates(geojson);
         let wkt = toWKT(geojson);
 
-        const url = `https://geogratis.gc.ca/services/elevation/${$scope.statsSource}/profile`;
+        const url = $scope.services[$scope.statsSource];
 
         let params = {
           path: wkt,
@@ -593,7 +589,7 @@ export default class InfoPanel {
           params: params,
         }
 
-        const url = `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${$scope.statsSource}/viewshed.json`;
+        const url = $scope.services[$scope.statsSource];
 
         $http.get(url, options).then(function successCallback(response) {
 
@@ -604,17 +600,9 @@ export default class InfoPanel {
           that.setResult(data);
 
           let latLongGeometry = geojsonToArcGIS(data);
-          // let latLongGeometry = new Point(10, 20, new SpatialReference({ wkid: 4326 }));
-
-          // let testGeom = latLongGeometry;
-          // testGeom.geometry.rings = [ latLongGeometry.geometry.rings[0].map((ring, i) => {
-          //   let [a, b] = ring;
-          //   return [a, b];
-          // }) ];
 
           let mapProjection = map.spatialReference;
           let projectedGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(mapProjection, latLongGeometry);
-          // let projectedCenter = (<any>RAMP).GAPI.proj.localProjectGeometry(mapProjection, center);
 
           that.updateViewshedGraphic(projectedGeometry, $scope.geometry, radius);
 
@@ -631,7 +619,6 @@ export default class InfoPanel {
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
-        console.debug(JSON.stringify($scope.geometry));
         let geojson = arcgisToGeoJSON(latLongGeometry);
 
         let params = {
@@ -643,7 +630,7 @@ export default class InfoPanel {
           params: params,
         }
 
-        const url = `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${$scope.statsSource}/stats.json`;
+        const url = $scope.services[$scope.statsSource];
 
         $http.get(url, options).then(function successCallback(response) {
 

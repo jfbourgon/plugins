@@ -1,5 +1,7 @@
-// import { UIManager } from './ui-manager';
+
 import { UI } from './ui';
+
+import { DEFAULT_ELEVATION_SOURCES, PROFILE_SERVICE_DEFAULT_URL, STATISTICS_SERVICE_DEFAULT_URL, VIEWSHED_SERVICE_DEFAULT_URL } from './constants';
 
 export default class ElevationServicePlugin {
 
@@ -33,59 +35,44 @@ export default class ElevationServicePlugin {
     this.ui.hide();
   }
 
+  parseConfig(config) {
 
-  parseConfig(config) : Configuration {
+    let servicesTypes = {
+      profile: PROFILE_SERVICE_DEFAULT_URL,
+      statistics: STATISTICS_SERVICE_DEFAULT_URL,
+      viewshed: VIEWSHED_SERVICE_DEFAULT_URL
+    };
 
-    let conf = <Configuration>{};
+    let defaultServices = {};
 
-    let profileServices = ['cdem', 'csdm'].map(source => ({
-      id: source + '-profile',
-      serviceType: 'profile',
-      url: `https://geogratis.gc.ca/services/elevation/${source}/profile`
-    }));
+    Object.keys(servicesTypes).forEach(serviceType => {
 
-    let statsServices = ['cdem', 'csdm'].map(source => ({
-      id: source + '-statistics',
-      serviceType: 'statistics',
-      url: `https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/${source}/stats.json`,
-      params: {
-        type: source
-      }
-    }));
+      let conf = config.services && config.services[serviceType];
 
-    let services = [...profileServices, ...statsServices];
+      let servicesMap = new Map();
 
-    if ( !config.services ) {
-    } else if ( !Array.isArray(config.services) ) {
-      console.warn('Elevation plugin: services config keyword must be array, will fallback to default services ...');
-    } else {
+      let sources = conf && conf.sources;
+      let dataSources = Array.isArray(sources) ? sources : DEFAULT_ELEVATION_SOURCES;
 
-      services = config.services.map((item, idx) => {
+      let urlTemplate = (conf && conf.url) || servicesTypes[serviceType];
 
-        switch(typeof item) {
-          case 'object':
-            if ( !item.id || !item.url || !item.serviceType ) {
-              console.warn('Elevation plugin: services config item must be an object with id and url properties...');
-              return null;
-              break;
-            }
-            return item;
-            break;
-          default:
-            console.warn('Elevation plugin: services config item must be an object with id, serviceType, and url properties...');
-            break;
-        }
-
+      dataSources.forEach(source => {
+        servicesMap.set(source, urlTemplate.replace(/{{source}}/g, source));
       });
 
-    }
+      let services = {};
+      servicesMap.forEach((value, key, map) => {
+        services[key] = value;
+      });
 
-    conf.services = services;
-    conf.language = this._RV.getCurrentLang();
+      defaultServices[serviceType] = services;
 
-    // console.debug(conf);
+    })
 
-    return conf;
+    return {
+      services: defaultServices,
+      language: this._RV.getCurrentLang()
+    };
 
   }
 
@@ -166,7 +153,7 @@ ElevationServicePlugin.prototype.translations = {
       },
       header: {
         downloadBtn: {
-          tooltip: 'Download as JSON'
+          tooltip: 'Download result as JSON'
         }
       },
       stepMenuBtn: {
@@ -258,7 +245,7 @@ ElevationServicePlugin.prototype.translations = {
       },
       header: {
         downloadBtn: {
-          tooltip: 'Télécharger en format JSON'
+          tooltip: 'Télécharger le résultat en format JSON'
         }
       },
       stepMenuBtn: {
@@ -324,11 +311,5 @@ ElevationServicePlugin.prototype.translations = {
 
   }
 };
-
-
-interface Configuration {
-  language: string;
-  services: Array<any>;
-}
 
 (<any>window).elevation = ElevationServicePlugin;
