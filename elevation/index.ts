@@ -52,7 +52,7 @@ export default class ElevationServicePlugin {
       let servicesMap = new Map();
 
       let sources = conf && conf.sources;
-      let dataSources = Array.isArray(sources) ? sources : DEFAULT_ELEVATION_SOURCES;
+      let dataSources = (Array.isArray(sources) && sources.length > 0) ? sources : DEFAULT_ELEVATION_SOURCES;
 
       let urlTemplate = (conf && conf.url) || servicesTypes[serviceType];
 

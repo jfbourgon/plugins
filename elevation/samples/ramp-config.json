@@ -267,7 +267,10 @@
             ]
           },
           "statistics": {
-            "url": "http://statistics.canada/{{source}}"
+            "url": "https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/{{source}}/stats.json"
+          },
+          "viewshed": {
+            "sources": []
           }
         }
       }
