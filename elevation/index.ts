@@ -143,7 +143,9 @@ ElevationServicePlugin.prototype.translations = {
       okBtn: {
         label: 'Thank you, I understand...'
       },
-      bodyText: 'Lorem ipsum dolor sit amet, adipiscing vulputate. Suspendisse suspendisse, sit proin orci diam, scelerisque vulputate eros elit fringilla est volutpat, amet libero. Et mi proin aenean pellentesque varius phasellus, amet in tincidunt vestibulum et praesent amet, feugiat sem a consectetuer, neque risus neque justo sed velit, sapien fermentum sodales amet lacinia lorem. Metus imperdiet, senectus hendrerit aliquam, magna id nibh ut in, auctor et lectus tortor risus. Rhoncus sed, non consectetuer amet duis, sit elementum nec in suscipit ultricies morbi, vehicula imperdiet a, platea sollicitudin. Felis dui in ligula aut, mauris curabitur maecenas quis, inceptos sit sodales amet nostrud, praesentium proin platea congue eget ligula dolor. Sed vitae dignissim posuere viverra purus. Lacinia etiam donec erat aenean est eleifend. Vitae facilisis nec. Torquent risus, eu integer, ornare pede, nulla consequat ornare, montes dolor aliquam non. Mauris enim, laoreet exercitationem morbi dui nulla arcu suspendisse.'
+      profileText: `The <strong>Elevation Profile</strong> tool allows displaying the relief representing the intersection of a line segment with different elevation models.`,
+      statisticsText: `The <strong>Elevation Statistics</strong> tool allows the calculation of a series of statistics related to the relief located inside a polygon according to different elevation models.`,
+      viewshedText: `The <strong>Viewshed Analysis</strong> tool provides a representation of the portion of the landscape visible from a point of view according to different elevation models.`
     },
     infoPanel: {
       title: {
@@ -235,7 +237,9 @@ ElevationServicePlugin.prototype.translations = {
       okBtn: {
         label: 'Merci, j\'ai compris...'
       },
-      bodyText: 'Lorem ipsum dolor sit amet, adipiscing vulputate. Suspendisse suspendisse, sit proin orci diam, scelerisque vulputate eros elit fringilla est volutpat, amet libero. Et mi proin aenean pellentesque varius phasellus, amet in tincidunt vestibulum et praesent amet, feugiat sem a consectetuer, neque risus neque justo sed velit, sapien fermentum sodales amet lacinia lorem. Metus imperdiet, senectus hendrerit aliquam, magna id nibh ut in, auctor et lectus tortor risus. Rhoncus sed, non consectetuer amet duis, sit elementum nec in suscipit ultricies morbi, vehicula imperdiet a, platea sollicitudin. Felis dui in ligula aut, mauris curabitur maecenas quis, inceptos sit sodales amet nostrud, praesentium proin platea congue eget ligula dolor. Sed vitae dignissim posuere viverra purus. Lacinia etiam donec erat aenean est eleifend. Vitae facilisis nec. Torquent risus, eu integer, ornare pede, nulla consequat ornare, montes dolor aliquam non. Mauris enim, laoreet exercitationem morbi dui nulla arcu suspendisse.'
+      profileText: `L'outil <strong>Profil d'élévation</strong> permet d'obtenir un aperçu du relief représentant l'intersection d'un segment de ligne avec différents modèles d'élévation.`,
+      statisticsText: `L'outil <strong>Statistiques d'élévation</strong> permet le calcul d'une série de statistiques concernant le relief situé à l'intérieur d'un polygone selon différents modèles d'élévation.`,
+      viewshedText: `L'outil <strong>Analyse de visibilité</strong> permet d'obtenir une représentation de la portion du territoire visible à partir d'un point de vue selon différents modèles d'élévation.`
     },
     infoPanel: {
       title: {

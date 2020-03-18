@@ -27,6 +27,14 @@
   display: flex;
   flex: 1;
 
+  ul {
+    padding-inline-start: 20px;
+  }
+
+  p {
+    padding: 0;
+  }
+
   .panel-body {
     display: flex;
     flex-direction: column;
