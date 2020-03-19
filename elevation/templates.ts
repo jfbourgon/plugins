@@ -223,23 +223,23 @@ export const STATISTICS_INFO_PANEL_TEMPLATE = ` 
                     <tbody class="md-body">
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.north' | translate }}</td>
-                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.north) }}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.north * 100, 0) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.south' | translate }}</td>
-                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.south) }}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.south * 100, 0) }}</td>
                         </tr>
                         <tr class="md-row">
                             <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.west' | translate }}</td>
-                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.west) }}</td>
+                            <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.west * 100, 0) }}</td>
                         </tr>
                         <tr class="md-row">
                         <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.east' | translate }}</td>
-                        <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.east) }}</td>
+                        <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.east * 100, 0) }}</td>
                     </tr>
                     <tr class="md-row">
                     <td class="md-cell">{{ 'plugins.elevation.infoPanel.stats.aspect.flat' | translate }}</td>
-                    <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.flat) }}</td>
+                    <td class="md-cell md-numeric">{{ getFormattedValue(result.aspect.flat * 100, 0) }}</td>
                 </tr>
                     </tbody>
                 </table>
