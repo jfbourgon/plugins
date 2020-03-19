@@ -4,7 +4,7 @@ export const PROFILE_SERVICE_DEFAULT_URL = 'https://geogratis.gc.ca/services/ele
 export const STATISTICS_SERVICE_DEFAULT_URL = 'https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/{{source}}/stats.json';
 export const VIEWSHED_SERVICE_DEFAULT_URL = 'https://datacube-dev-static.s3.ca-central-1.amazonaws.com/elevation/{{source}}/viewshed.json';
 
-export const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm'];
+export const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm', 'arcticdem2m'];
 
 // Symbols for drawing interactions and results
 
