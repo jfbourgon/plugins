@@ -14,7 +14,7 @@ import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_I
 import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
 import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
-import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, MAX_VIEWSHED_OFFSET } from './constants'
+import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, DEFAULT_VIEWSHED_OFFSET, MAX_VIEWSHED_OFFSET } from './constants'
 
 import { INFO_PANEL_ID } from './constants';
 
@@ -258,7 +258,7 @@ export default class InfoPanel {
       $scope.statsSources = Object.keys(that.services);
       $scope.statsSource =  $scope.statsSources[0];
 
-      $scope.viewshedOffset = 0;
+      $scope.viewshedOffset = DEFAULT_VIEWSHED_OFFSET;
       $scope.maxViewshedOffset = MAX_VIEWSHED_OFFSET;
 
       $scope.mapZoomLevel = zoomLevel || 1;

@@ -14,6 +14,8 @@ export const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';
 // Busines-logic
 
 export const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
+
+export const DEFAULT_VIEWSHED_OFFSET = 10;
 export const MAX_VIEWSHED_OFFSET = 1000;
 
 export const ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP = {
