@@ -1,16 +1,14 @@
 
-import { UI } from './ui';
+import { UIManager } from './ui-manager';
 
 import { DEFAULT_ELEVATION_SOURCES, PROFILE_SERVICE_DEFAULT_URL, STATISTICS_SERVICE_DEFAULT_URL, VIEWSHED_SERVICE_DEFAULT_URL } from './constants';
 
 export default class ElevationServicePlugin {
 
-  private mapApi;
-
   private isPluginActive;
-
   private pluginButton;
-  private ui;
+
+  private uiManager;
 
   togglePluginState() {
 
@@ -28,11 +26,11 @@ export default class ElevationServicePlugin {
   }
 
   activate() {
-    this.ui.show();
+    this.uiManager.showUI();
   }
 
   deactivate() {
-    this.ui.hide();
+    this.uiManager.hideUI();
   }
 
   parseConfig(config) {
@@ -97,7 +95,7 @@ export default class ElevationServicePlugin {
 
     let config = this.parseConfig(this._RV.getConfig('plugins').elevation);
 
-    this.ui = new UI(mapApi, config);
+    this.uiManager = new UIManager(mapApi, config);
 
     this.pluginButton = mapApi.mapI.addPluginButton(
       ElevationServicePlugin.prototype.translations[config.language].pluginName,
@@ -109,7 +107,7 @@ export default class ElevationServicePlugin {
   }
 
   destroy() {
-    this.ui.destroy();
+    this.uiManager.destroyUI();
     console.info('Elevation service plugin destroyed...');
   }
 
@@ -147,7 +145,7 @@ ElevationServicePlugin.prototype.translations = {
       statisticsText: `The <strong>Elevation Statistics</strong> tool allows the calculation of a series of statistics related to the relief located inside a polygon according to different elevation models.`,
       viewshedText: `The <strong>Viewshed Analysis</strong> tool provides a representation of the portion of the landscape visible from a point of view according to different elevation models.`
     },
-    infoPanel: {
+    resultPanel: {
       title: {
         profile: 'Elevation Profile',
         statistics: 'Elevation Statistics',
@@ -242,7 +240,7 @@ ElevationServicePlugin.prototype.translations = {
       statisticsText: `L'outil <strong>Statistiques d'élévation</strong> permet le calcul d'une série de statistiques concernant le relief situé à l'intérieur d'un polygone selon différents modèles d'élévation.`,
       viewshedText: `L'outil <strong>Analyse de visibilité</strong> permet d'obtenir une représentation de la portion du territoire visible à partir d'un point de vue selon différents modèles d'élévation.`
     },
-    infoPanel: {
+    resultPanel: {
       title: {
         profile: 'Profil d\'élévation',
         statistics: 'Statistiques d\'élévation',

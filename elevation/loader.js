@@ -1,3 +1,3 @@
 import './index.ts';
-import './main.scss';
-import './md-data-table.css';
+import './assets/main.scss';
+import './assets/md-data-table.css';

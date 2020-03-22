@@ -73,7 +73,7 @@
 }
 
 // Info Panel
-#elevationInfoPanel {
+#elevationResultPanel {
 
   display: flex;
   flex: 1;
@@ -207,7 +207,7 @@ input[type="number"] {
       font-size: 14px;
     }
 
-    .rv-elevation-infopanel-chart {
+    .rv-elevation-resultpanel-chart {
 
       align-self: stretch;
       flex: 1;
@@ -222,7 +222,7 @@ input[type="number"] {
 
     }
 
-    .rv-elevation-infopanel-statistics-table {
+    .rv-elevation-resultpanel-statistics-table {
 
       flex: 1;
       align-self: stretch;

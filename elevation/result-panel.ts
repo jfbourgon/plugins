@@ -9,16 +9,22 @@ const Chart = require('chart.js');
 
 const numeral = require('numeral');
 
-import { PROFILE_INFO_PANEL_TEMPLATE, STATISTICS_INFO_PANEL_TEMPLATE, VIEWSHED_INFO_PANEL_TEMPLATE, DOWNLOAD_BUTTON_TEMPLATE } from './templates';
+import { PROFILE_PANEL_TEMPLATE } from './templates/profile-panel';
+import { STATISTICS_PANEL_TEMPLATE } from './templates/statistics-panel';
+import { VIEWSHED_PANEL_TEMPLATE } from './templates/viewshed-panel';
+import { DOWNLOAD_BUTTON_TEMPLATE } from './templates/download-btn';
 
-import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
+import { RESULTS_LAYER_ID } from './constants';
 import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
-import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, DEFAULT_VIEWSHED_OFFSET, MAX_VIEWSHED_OFFSET } from './constants'
+import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, VIEWSHED_DEFAULT_OFFSET, VIEWSHED_MAX_OFFSET, PROFILE_STEP_FACTORS, PROFILE_DEFAULT_STEP_FACTOR} from './constants'
 
-import { INFO_PANEL_ID } from './constants';
+import { RESULT_PANEL_ID } from './constants';
+
+import { buildCircle, roundGeoJsonCoordinates } from './util.js'
 
 // Create dummy "ISO" locale to format numbers (regardless of user's locale)
+
 numeral.register('locale', 'iso', {
   delimiters: {
       thousands: ' ',
@@ -28,72 +34,7 @@ numeral.register('locale', 'iso', {
 
 numeral.locale('iso');
 
-const buildCircle = (x, y, radius, numPoints = 360) => {
-
-  var step = 2 * Math.PI / numPoints;
-  let coordinates = [];
-
-  for ( var theta = 0;  theta < 2 * Math.PI; theta += step ) {
-    var h = x + radius * Math.cos(theta);
-    var k = y - radius * Math.sin(theta);
-    coordinates.push([h, k]);
-  }
-
-  return coordinates;
-
-}
-
-const roundNumber = (num, scale) => {
-
-  if(!("" + num).includes("e")) {
-
-    // @ts-ignore
-    return +(Math.round(num + "e+" + scale)  + "e-" + scale);
-
-  } else {
-
-    var arr = ("" + num).split("e");
-    var sig = ""
-    if(+arr[1] + scale > 0) {
-      sig = "+";
-    }
-
-    // @ts-ignore
-    return +(Math.round(+arr[0] + "e" + sig + (+arr[1] + scale)) + "e-" + scale);
-
-  }
-
-}
-
-// Very naive implementation to round up coordinates
-const roundGeoJsonCoordinates = (geojson, nbDecimals = DEFAULT_COORDINATE_ROUNDING_SCALE) => {
-
-  let { coordinates, type } = geojson;
-
-  let outCoordinates;
-
-  if (type === 'Point') {
-    let [x, y] = coordinates;
-    outCoordinates = [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
-  } else if (type === 'Polygon') {
-    outCoordinates = coordinates.map((ring, i) => {
-      return ring.map(([x, y], i) => {
-        return [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
-      });
-    });
-  } else if (type === 'LineString') {
-    outCoordinates = coordinates.map(([x, y], i) => {
-      return [ roundNumber(x, nbDecimals), roundNumber(y, nbDecimals) ];
-    });
-  } else {
-    return geojson;
-  }
-
-  return {...geojson, ...{ coordinates: outCoordinates }};
-
-}
-
-export default class InfoPanel {
+export default class ResultPanel {
 
   public translations: any;
 
@@ -148,7 +89,7 @@ export default class InfoPanel {
 
   updateGeometry (geometry /*, zoomLevel */) {
 
-    const ctrl = (<any>window).angular.element(document.getElementById('elevation-rv-info-panel'));
+    const ctrl = (<any>window).angular.element(document.getElementById('elevation-rv-result-panel'));
     const scope = ctrl.scope();
 
     scope.setGeometry(geometry, /*, zoomLevel */);
@@ -197,9 +138,9 @@ export default class InfoPanel {
 
   show (geometry, zoomLevel) {
 
-    const panel = this.mapApi.panels.create(INFO_PANEL_ID);
+    const panel = this.mapApi.panels.create(RESULT_PANEL_ID);
 
-    let titleId = 'plugins.elevation.infoPanel.title.' + this.mode;
+    let titleId = 'plugins.elevation.resultPanel.title.' + this.mode;
     panel.header.title = this.mapApi.getTranslatedText(titleId);
 
     const close = panel.header.closeButton;
@@ -230,6 +171,7 @@ export default class InfoPanel {
 
         // Save the file. Some browsers like IE and Edge doesn't support File constructor, use blob
         // https://stackoverflow.com/questions/39266801/saving-file-on-ie11-with-filesaver
+
         const file = new Blob([data], { type: 'application/json' });
         FileSaver.saveAs(file, downloadFileName);
 
@@ -241,25 +183,24 @@ export default class InfoPanel {
 
     });
 
-    this.mapApi.agControllerRegister('InfoPanelCtrl', ['$scope','$http', function($scope, $http) {
+    this.mapApi.agControllerRegister('ResultPanelCtrl', ['$scope','$http', function($scope, $http) {
 
       $scope.mode = that.mode;
 
       $scope.status = 'loading';
       $scope.geometry = geometry;
 
-      $scope.steps = [5, 10, 20, 50, 100];
-      $scope.stepFactor = 20;
+      $scope.steps = PROFILE_STEP_FACTORS
+      $scope.stepFactor = PROFILE_DEFAULT_STEP_FACTOR;
       $scope.smoothProfile = true;
 
       $scope.services = that.services;
-      // console.debug(Object.keys(that.services));
-      // $scope.statsSources = ['cdem', 'cdsm'];
+
       $scope.statsSources = Object.keys(that.services);
       $scope.statsSource =  $scope.statsSources[0];
 
-      $scope.viewshedOffset = DEFAULT_VIEWSHED_OFFSET;
-      $scope.maxViewshedOffset = MAX_VIEWSHED_OFFSET;
+      $scope.viewshedOffset = VIEWSHED_DEFAULT_OFFSET;
+      $scope.maxViewshedOffset = VIEWSHED_MAX_OFFSET;
 
       $scope.mapZoomLevel = zoomLevel || 1;
 
@@ -399,8 +340,6 @@ export default class InfoPanel {
             type: 'line',
             options: {
 
-              // onClick: (e, data) => console.debug('click on chart => ', e, data),
-
               maintainAspectRatio: true,
 
               layout: {
@@ -458,7 +397,7 @@ export default class InfoPanel {
                   tension: $scope.smoothProfile ? 0.4 : 0,
                   fill: false,
                   showLine: false,
-                  pointBackgroundColor: '#6A50A3',
+                  pointBackgroundColor: DEFAULT_DRAW_LINE_SYMBOL_COLOR,
                   pointRadius: 5,
                   data: chartPointData
                 },
@@ -468,7 +407,7 @@ export default class InfoPanel {
                   showLine: false,
                   pointBackgroundColor: '#fff',
                   pointRadius: 3,
-                  pointBorderColor: '#6A50A3',
+                  pointBorderColor: DEFAULT_DRAW_LINE_SYMBOL_COLOR,
                   data: chartIntermediatePointData
                 },
                 {
@@ -477,7 +416,7 @@ export default class InfoPanel {
                   showLine: false,
                   pointBackgroundColor: '#fff',
                   pointRadius: 6,
-                  pointBorderColor: '#6A50A3',
+                  pointBorderColor: DEFAULT_DRAW_LINE_SYMBOL_COLOR,
                   pointBorderWidth: 2,
                   pointStyle: 'crossRot',
                   data: chartNullElevationData
@@ -486,8 +425,8 @@ export default class InfoPanel {
                   tension: $scope.smoothProfile ? 0.4 : 0,
                   pointRadius: 0,
                   pointHoverRadius: 0,
-                  backgroundColor: 'rgba(217,205,229, 0.5)',
-                  borderColor: '#6A50A3',
+                  backgroundColor: DEFAULT_DRAW_FILL_SYMBOL_COLOR,
+                  borderColor: DEFAULT_DRAW_LINE_SYMBOL_COLOR,
                   data: chartLineData
                 }
               ]
@@ -506,6 +445,7 @@ export default class InfoPanel {
       $scope.doProfileRequest = function () {
 
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
+        const { esriMap: map } = that.mapApi;
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
@@ -532,11 +472,16 @@ export default class InfoPanel {
 
             } else {
 
+              // Measure accumulated horizontal distance along profile
+
               const previousPoint = array[index - 1];
               const previousDistance = acc[index - 1].distance;
 
               const { geometry: { coordinates: [ x1, y1 ] } } = previousPoint;
               const { geometry: { coordinates: [ x2, y2 ] } } = point;
+
+              // We project to a 'projected' coordinate system (3978)
+              // in order to have coordinates in meters and be able to measure distances along profile
 
               const projectedPoint1 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x1, y: y1 });
               const projectedPoint2 = (<any>RAMP).GAPI.proj.localProjectPoint(4326, 3978, { x: x2, y: y2});
@@ -576,7 +521,7 @@ export default class InfoPanel {
         let level = $scope.mapZoomLevel;
         let radius = ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[level] || ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[10];
 
-        let center = roundGeoJsonCoordinates(geojson);
+        let center = roundGeoJsonCoordinates(geojson, DEFAULT_COORDINATE_ROUNDING_SCALE);
 
         let params = {
           geom: center,
@@ -622,7 +567,7 @@ export default class InfoPanel {
         let geojson = arcgisToGeoJSON(latLongGeometry);
 
         let params = {
-          geom: roundGeoJsonCoordinates(geojson),
+          geom: roundGeoJsonCoordinates(geojson, DEFAULT_COORDINATE_ROUNDING_SCALE),
           level: $scope.mapZoomLevel
         };
 
@@ -657,11 +602,11 @@ export default class InfoPanel {
     this.mapApi.$compile(downloadButtonTemplate)
     panel.header.prepend(downloadButtonTemplate);
 
-    let infoPanelTemplate = this.mode === 'viewshed' ? $(VIEWSHED_INFO_PANEL_TEMPLATE) : ( this.mode === 'profile' ? $(PROFILE_INFO_PANEL_TEMPLATE) : $(STATISTICS_INFO_PANEL_TEMPLATE) );
+    let resultPanelTemplate = this.mode === 'viewshed' ? $(VIEWSHED_PANEL_TEMPLATE) : ( this.mode === 'profile' ? $(PROFILE_PANEL_TEMPLATE) : $(STATISTICS_PANEL_TEMPLATE) );
 
-    this.mapApi.$compile(infoPanelTemplate);
+    this.mapApi.$compile(resultPanelTemplate);
     panel.body.empty();
-    panel.body.prepend(infoPanelTemplate);
+    panel.body.prepend(resultPanelTemplate);
 
     panel.open();
 
@@ -670,8 +615,8 @@ export default class InfoPanel {
     setTimeout(() => {
 
       // The following line is not working, need to use jquery workaround...
-      // infoPanel.element.removeClass('rv-elevation-dialog-hidden');
-      $('#elevationInfoPanel').removeClass('rv-elevation-dialog-hidden');
+      // resultPanel.element.removeClass('rv-elevation-dialog-hidden');
+      $('#elevationResultPanel').removeClass('rv-elevation-dialog-hidden');
 
     }, 10);
 

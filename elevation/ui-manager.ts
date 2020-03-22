@@ -1,14 +1,14 @@
 import storage from './simple-storage';
 
-import InfoPanel from './info-panel';
+import ResultPanel from './result-panel';
 import InfoTipPanel from './infotip-panel';
 
 import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
 import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
 
-import { TOOLBAR_TEMPLATE } from './templates';
+import { TOOLBAR_TEMPLATE } from './templates/toolbar';
 
-export class UI {
+export class UIManager {
 
   public translations: any;
 
@@ -29,7 +29,7 @@ export class UI {
   private selectedTool: any;
   private isEditing: any;
 
-  private infoPanel: any;
+  private resultPanel: any;
 
   private activeGraphic: any;
 
@@ -233,7 +233,7 @@ export class UI {
     this.clearGraphics();
     this.esriEditToolbar.deactivate();
 
-    esriBundle.i18n.toolbars.draw = UI.prototype.translations[this.config.language].drawTools[name];
+    esriBundle.i18n.toolbars.draw = UIManager.prototype.translations[this.config.language].drawTools[name];
 
     let esriToolNameToActivate = name === 'viewshed' ? 'point' : ( name === 'profile' ? 'polyline' : 'polygon' );
 
@@ -299,7 +299,7 @@ export class UI {
     return this.mapApi.esriMap._layers[RESULTS_LAYER_ID];
   }
 
-  onHideInfoPanel(e) {
+  onHideResultPanel(e) {
 
     const { panel, code } = e;
 
@@ -313,14 +313,14 @@ export class UI {
 
   }
 
-  showInfoPanel(geometry, zoomLevel) {
+  showResultPanel(geometry, zoomLevel) {
 
-    let infoPanel = new InfoPanel(this.mapApi, this.esriBundle, this.selectedTool, { services: this.config.services[this.selectedTool] });
+    let resultPanel = new ResultPanel(this.mapApi, this.esriBundle, this.selectedTool, { services: this.config.services[this.selectedTool] });
 
-    infoPanel.show(geometry, zoomLevel);
-    infoPanel.panel.closing.subscribe(this.onHideInfoPanel.bind(this));
+    resultPanel.show(geometry, zoomLevel);
+    resultPanel.panel.closing.subscribe(this.onHideResultPanel.bind(this));
 
-    this.infoPanel = infoPanel;
+    this.resultPanel = resultPanel;
 
     this.activateEditingMode();
 
@@ -331,14 +331,14 @@ export class UI {
     const { geometry, target: { map } } = e;
 
     this.addToMap(geometry);
-    this.showInfoPanel(geometry, map.getZoom());
+    this.showResultPanel(geometry, map.getZoom());
 
   }
 
   handleEditEnd(e) {
 
     let { graphic: { geometry }, target: { map }, ...rest } = e;
-    this.infoPanel.updateGeometry(geometry /*, map.getZoom() */);
+    this.resultPanel.updateGeometry(geometry /*, map.getZoom() */);
 
   }
 
@@ -379,8 +379,9 @@ export class UI {
     this.resultsLayer.clear();
   }
 
-  show() {
+  showUI() {
 
+    // Store current identity mode in order to restore on teardown
     this.identifyMode = this.mapApi.layersObj._identifyMode;
 
     if (!this.$toolbar) {
@@ -392,6 +393,7 @@ export class UI {
 
     this.$toolbar.removeClass('hidden');
 
+    // Determine if we need to show infotip dialog
     let skipInfoTipDialog = storage('skipInfoTipDialog') || false;
 
     if (!skipInfoTipDialog) {
@@ -403,12 +405,12 @@ export class UI {
 
   }
 
-  hide() {
+  hideUI() {
 
-    let infoPanel = this.infoPanel;
+    let resultPanel = this.resultPanel;
 
-    if (infoPanel) {
-      infoPanel.panel.destroy();
+    if (resultPanel) {
+      resultPanel.panel.destroy();
     }
 
     this.esriDrawToolbar.deactivate();
@@ -430,16 +432,16 @@ export class UI {
 
   }
 
-  destroy() {
+  destroyUI() {
 
-    this.hide();
+    this.hideUI();
     this.mapApi.layersObj.removeLayer(DRAWING_LAYER_ID);
 
   }
 
 }
 
-UI.prototype.translations = {
+UIManager.prototype.translations = {
   'en-CA': {
       drawTools: {
         viewshed: {

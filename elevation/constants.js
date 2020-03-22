@@ -15,8 +15,11 @@ export const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';
 
 export const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
 
-export const DEFAULT_VIEWSHED_OFFSET = 10;
-export const MAX_VIEWSHED_OFFSET = 1000;
+export const VIEWSHED_DEFAULT_OFFSET = 10;
+export const VIEWSHED_MAX_OFFSET = 1000;
+
+export const PROFILE_STEP_FACTORS = [5, 10, 20, 50, 100];
+export const PROFILE_DEFAULT_STEP_FACTOR = [5, 10, 20, 50, 100];
 
 export const ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP = {
   10: 100000,
@@ -31,7 +34,8 @@ export const ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP = {
 
 // UI
 
-export const INFO_PANEL_ID = 'elevationInfoPanel';
+export const RESULT_PANEL_ID = 'elevationResultPanel';
+export const INFOTIP_PANEL_ID = 'elevationInfoTipPanel';
 
 export const DRAWING_LAYER_ID = 'rvElevationDrawing';
 export const RESULTS_LAYER_ID = 'rvElevationResults';
