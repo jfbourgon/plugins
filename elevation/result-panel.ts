@@ -15,9 +15,9 @@ import { VIEWSHED_PANEL_TEMPLATE } from './templates/viewshed-panel';
 import { DOWNLOAD_BUTTON_TEMPLATE } from './templates/download-btn';
 
 import { RESULTS_LAYER_ID } from './constants';
-import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
+import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_SIZE, DEFAULT_RADIUS_LINE_SYMBOL_COLOR, DEFAULT_RADIUS_FILL_SYMBOL_COLOR, DEFAULT_RADIUS_LINE_SYMBOL_SIZE } from './constants';
 
-import { ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP, DEFAULT_COORDINATE_ROUNDING_SCALE, VIEWSHED_DEFAULT_OFFSET, VIEWSHED_MAX_OFFSET, PROFILE_STEP_FACTORS, PROFILE_DEFAULT_STEP_FACTOR} from './constants'
+import { DEFAULT_COORDINATE_ROUNDING_SCALE, VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP, VIEWSHED_DEFAULT_OFFSET, VIEWSHED_MAX_OFFSET, PROFILE_STEP_FACTORS, PROFILE_DEFAULT_STEP_FACTOR } from './constants'
 
 import { RESULT_PANEL_ID } from './constants';
 
@@ -62,10 +62,6 @@ export default class ResultPanel {
 
     this.result = null;
 
-    this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
-
-    // console.debug('services => ', this.services);
-
   }
 
   setResult (result) {
@@ -104,18 +100,18 @@ export default class ResultPanel {
 
     this.graphicsLayer.clear();
 
-    let { Graphic, SimpleFillSymbol, SimpleLineSymbol, Color, Polygon, Circle } = this.esriBundle;
+    let { Graphic, SimpleFillSymbol, SimpleLineSymbol, Color, Polygon } = this.esriBundle;
 
     let outlineColor = new Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR);
     let fillColor = new Color.fromString(DEFAULT_DRAW_FILL_SYMBOL_COLOR);
 
-    let radiusOutlineColor = new Color.fromHex('#000');
-    let radiusFillColor = new Color.fromString('rgba(0, 0, 0, 0.1)');
+    let radiusOutlineColor = new Color.fromHex(DEFAULT_RADIUS_LINE_SYMBOL_COLOR);
+    let radiusFillColor = new Color.fromString(DEFAULT_RADIUS_FILL_SYMBOL_COLOR);
 
-    let drawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, outlineColor, 1);
+    let drawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_SOLID, outlineColor, DEFAULT_DRAW_LINE_SYMBOL_SIZE);
     let drawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, drawLineSymbol, fillColor);
 
-    let radiusDrawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_DOT, radiusOutlineColor, 2);
+    let radiusDrawLineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_DOT, radiusOutlineColor, DEFAULT_RADIUS_LINE_SYMBOL_SIZE);
     let radiusDrawFillSymbol = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, radiusDrawLineSymbol, radiusFillColor);
 
     let polygon = new Polygon(geometry);
@@ -183,6 +179,8 @@ export default class ResultPanel {
 
     });
 
+    // Create Angular controller for result panel
+
     this.mapApi.agControllerRegister('ResultPanelCtrl', ['$scope','$http', function($scope, $http) {
 
       $scope.mode = that.mode;
@@ -219,7 +217,7 @@ export default class ResultPanel {
         return $scope.mode === 'profile' && $scope.status !== 'error';
       }
 
-      $scope.setGeometry = function(geometry /*, zoomLevel */) {
+      $scope.setGeometry = function(geometry) {
         $scope.isDirty = true;
         $scope.geometry = geometry;
       }
@@ -284,7 +282,17 @@ export default class ResultPanel {
 
       $scope.updateChart = function() {
 
+        const SMOOTH_FACTOR = 0.4;
+        const CHART_FONT_FAMILY = 'Roboto, "Helvetica Neue", sans-serif';
+        const CHART_FONT_SIZE = 14;
+
         let data = that.getResult();
+
+        // The profile chart is composed of 4 datasets:
+        // 1. The profile itself (line)
+        // 2. The data points (user-drawn)
+        // 3. The interpolated points (according to the step factor)
+        // 4. The NULL-elevation points
 
         let chartLineData = data.map((item, i) => {
           return { x: (item.distance / 1000), y: item.altitude };
@@ -304,15 +312,15 @@ export default class ResultPanel {
 
         if ($scope.chart) {
 
-          $scope.chart.data.datasets[0].tension = $scope.smoothProfile ? 0.4 : 0;
+          $scope.chart.data.datasets[0].tension = $scope.smoothProfile ? SMOOTH_FACTOR : 0;
           $scope.chart.data.datasets[0].data = chartPointData;
 
-          $scope.chart.data.datasets[1].tension = $scope.smoothProfile ? 0.4 : 0;
+          $scope.chart.data.datasets[1].tension = $scope.smoothProfile ? SMOOTH_FACTOR : 0;
           $scope.chart.data.datasets[1].data = chartIntermediatePointData;
 
           $scope.chart.data.datasets[2].data = chartNullElevationData;
 
-          $scope.chart.data.datasets[3].tension = $scope.smoothProfile ? 0.4 : 0;
+          $scope.chart.data.datasets[3].tension = $scope.smoothProfile ? SMOOTH_FACTOR : 0;
           $scope.chart.data.datasets[3].data = chartLineData;
 
           $scope.chart.options.scales.xAxes[0].ticks.suggestedMax = chartLineData[chartLineData.length - 1].x;
@@ -368,8 +376,8 @@ export default class ResultPanel {
                   },
                   scaleLabel: {
                     display: true,
-                    fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
-                    fontSize: '14',
+                    fontFamily: CHART_FONT_FAMILY,
+                    fontSize: CHART_FONT_SIZE,
                     labelString: xAxisLabel
                   },
                 }],
@@ -381,8 +389,8 @@ export default class ResultPanel {
                   },
                   scaleLabel: {
                     display: true,
-                    fontFamily: 'Roboto, "Helvetica Neue", sans-serif',
-                    fontSize: '14',
+                    fontFamily: CHART_FONT_FAMILY,
+                    fontSize: CHART_FONT_SIZE,
                     labelString: yAxisLabel
                   }
                 }]
@@ -394,7 +402,7 @@ export default class ResultPanel {
             data: {
               datasets: [
                 {
-                  tension: $scope.smoothProfile ? 0.4 : 0,
+                  tension: $scope.smoothProfile ? SMOOTH_FACTOR : 0,
                   fill: false,
                   showLine: false,
                   pointBackgroundColor: DEFAULT_DRAW_LINE_SYMBOL_COLOR,
@@ -402,7 +410,7 @@ export default class ResultPanel {
                   data: chartPointData
                 },
                 {
-                  tension: $scope.smoothProfile ? 0.4 : 0,
+                  tension: $scope.smoothProfile ? SMOOTH_FACTOR : 0,
                   fill: false,
                   showLine: false,
                   pointBackgroundColor: '#fff',
@@ -444,12 +452,19 @@ export default class ResultPanel {
 
       $scope.doProfileRequest = function () {
 
+        // Retrieve required classes from ArcGIS JS API bundle
+
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
         const { esriMap: map } = that.mapApi;
+
+        // Project user-geometry to lat-long
+        // and convert to WKT
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
         let wkt = toWKT(geojson);
+
+        // Build query url and params
 
         const url = $scope.services[$scope.statsSource];
 
@@ -461,6 +476,8 @@ export default class ResultPanel {
         let options = {
           params: params,
         }
+
+        // Call backend
 
         $http.get(url, options).then(function successCallback(response) {
 
@@ -512,14 +529,20 @@ export default class ResultPanel {
 
       $scope.doViewshedRequest = function() {
 
+        // Retrieve required classes from ArcGIS JS API bundle
+
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
         const { esriMap: map } = that.mapApi;
+
+        // Project user-geometry to lat-long
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
 
+        // Retrieve request radius from map level
+
         let level = $scope.mapZoomLevel;
-        let radius = ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[level] || ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP[10];
+        let radius = VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[level] || VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[10];
 
         let center = roundGeoJsonCoordinates(geojson, DEFAULT_COORDINATE_ROUNDING_SCALE);
 
@@ -536,6 +559,8 @@ export default class ResultPanel {
 
         const url = $scope.services[$scope.statsSource];
 
+        // Call backend
+
         $http.get(url, options).then(function successCallback(response) {
 
           let { data } = response;
@@ -543,6 +568,8 @@ export default class ResultPanel {
           $scope.status = 'loaded';
 
           that.setResult(data);
+
+          // Project result back to map projection
 
           let latLongGeometry = geojsonToArcGIS(data);
 
@@ -561,7 +588,11 @@ export default class ResultPanel {
 
       $scope.doStatisticsRequest = function () {
 
+        // Retrieve required classes from ArcGIS JS API bundle
+
         const { Point, SpatialReference, geometryEngine } = that.esriBundle;
+
+        // Project user-geometry to lat-long
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
@@ -576,6 +607,8 @@ export default class ResultPanel {
         }
 
         const url = $scope.services[$scope.statsSource];
+
+        // Call backend
 
         $http.get(url, options).then(function successCallback(response) {
 
@@ -597,6 +630,8 @@ export default class ResultPanel {
       $scope.doRequest();
 
     }]);
+
+    // Create Angular controller for download button
 
     let downloadButtonTemplate = $(DOWNLOAD_BUTTON_TEMPLATE);
     this.mapApi.$compile(downloadButtonTemplate)

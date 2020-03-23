@@ -4,7 +4,7 @@ import ResultPanel from './result-panel';
 import InfoTipPanel from './infotip-panel';
 
 import { DRAWING_LAYER_ID, RESULTS_LAYER_ID } from './constants';
-import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR } from './constants';
+import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR, DEFAULT_DRAW_VERTEX_SYMBOL_SIZE, DEFAULT_DRAW_LINE_SYMBOL_SIZE } from './constants';
 
 import { TOOLBAR_TEMPLATE } from './templates/toolbar';
 
@@ -48,6 +48,7 @@ export class UIManager {
     this.selectedTool = null;
     this.identifyMode = null;
 
+    // Load ArcGIS JS API requirements
     let esriBundlePromise = (<any>RAMP).GAPI.esriLoadApiClasses([
       ['esri/toolbars/draw', 'drawToolbar'],
       ['esri/toolbars/edit', 'editToolbar'],
@@ -72,6 +73,7 @@ export class UIManager {
 
     });
 
+    // Add plugin layers (to be removed on teardown)
     this.mapApi.layersObj.addLayer(RESULTS_LAYER_ID);
     this.mapApi.layersObj.addLayer(DRAWING_LAYER_ID);
 
@@ -82,6 +84,7 @@ export class UIManager {
     // Store draw tooltip strings in order to restore them on teardown
     this.initialDrawToolsStrings = esriBundle.i18n.toolbars.draw;
 
+    // Clean-up toolbar, just in case...
     $('.rv-mapnav-elevation-content').remove();
 
     this.esriDrawToolbar = new esriBundle.drawToolbar(mapApi.esriMap);
@@ -105,6 +108,7 @@ export class UIManager {
     let setActiveTool = this.setActiveTool.bind(this);
     let getActiveGraphic = this.getActiveGraphic.bind(this);
 
+    // Create Angular controller for toolbar
     mapApi.agControllerRegister('ElevationToolbarCtrl', function () {
 
         this.controls = {
@@ -159,6 +163,7 @@ export class UIManager {
 
       });
 
+      // Handler to clean-up if plugin or viewer is closed
       const handleMapUnload = function(e) {
         that.editEndHandler.remove();
         that.moveEndHandler.remove();
@@ -196,11 +201,11 @@ export class UIManager {
 
     const vertexSymbol = new esriBundle.SimpleMarkerSymbol(
       esriBundle.SimpleMarkerSymbol.STYLE_CIRCLE,
-      8,
+      DEFAULT_DRAW_VERTEX_SYMBOL_SIZE,
       new esriBundle.SimpleLineSymbol(
         esriBundle.SimpleLineSymbol.STYLE_SOLID,
         new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR),
-        1
+        DEFAULT_DRAW_LINE_SYMBOL_SIZE
       ),
       new esriBundle.Color.fromHex(DEFAULT_DRAW_LINE_SYMBOL_COLOR)
     );
@@ -342,6 +347,19 @@ export class UIManager {
 
   }
 
+  addGraphic(geometry: any, symbol: any) {
+
+    const { Graphic } = this.esriBundle;
+
+    let graphic = new Graphic(geometry, symbol);
+
+    this.clearGraphics();
+
+    this.activeGraphic = graphic;
+    this.drawingLayer.add(graphic);
+
+  }
+
   addToMap(geometry) {
 
     const symbols = this.symbols;
@@ -357,19 +375,6 @@ export class UIManager {
         this.addGraphic(geometry, symbols.polygon);
         break;
     }
-
-  }
-
-  addGraphic(geometry: any, symbol: any) {
-
-    const { Graphic } = this.esriBundle;
-
-    let graphic = new Graphic(geometry, symbol);
-
-    this.clearGraphics();
-
-    this.activeGraphic = graphic;
-    this.drawingLayer.add(graphic);
 
   }
 

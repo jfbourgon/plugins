@@ -11,6 +11,13 @@ export const DEFAULT_ELEVATION_SOURCES = ['cdem', 'cdsm', 'arcticdem2m'];
 export const DEFAULT_DRAW_FILL_SYMBOL_COLOR = 'rgba(217,205,229, 0.5)';
 export const DEFAULT_DRAW_LINE_SYMBOL_COLOR = '#6A50A3';
 
+export const DEFAULT_DRAW_VERTEX_SYMBOL_SIZE = 8;
+export const DEFAULT_DRAW_LINE_SYMBOL_SIZE = 1;
+
+export const DEFAULT_RADIUS_LINE_SYMBOL_COLOR = '#000';
+export const DEFAULT_RADIUS_LINE_SYMBOL_SIZE = 2;
+export const DEFAULT_RADIUS_FILL_SYMBOL_COLOR = 'rgba(0, 0, 0, 0.1)';
+
 // Busines-logic
 
 export const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
@@ -18,10 +25,7 @@ export const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;
 export const VIEWSHED_DEFAULT_OFFSET = 10;
 export const VIEWSHED_MAX_OFFSET = 1000;
 
-export const PROFILE_STEP_FACTORS = [5, 10, 20, 50, 100];
-export const PROFILE_DEFAULT_STEP_FACTOR = [5, 10, 20, 50, 100];
-
-export const ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP = {
+export const VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP = {
   10: 100000,
   11: 51200,
   12: 25600,
@@ -31,6 +35,9 @@ export const ZOOM_LEVEL_TO_VIEWSHED_RADIUS_MAP = {
   16: 1600,
   17: 800
 }
+
+export const PROFILE_STEP_FACTORS = [5, 10, 20, 50, 100];
+export const PROFILE_DEFAULT_STEP_FACTOR = 10;
 
 // UI
 
