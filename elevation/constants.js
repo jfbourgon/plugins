@@ -18,6 +18,9 @@ export const DEFAULT_RADIUS_LINE_SYMBOL_COLOR = '#000';
 export const DEFAULT_RADIUS_LINE_SYMBOL_SIZE = 2;
 export const DEFAULT_RADIUS_FILL_SYMBOL_COLOR = 'rgba(0, 0, 0, 0.1)';
 
+export const PROFILE_CHART_FONT_FAMILY = 'Roboto, "Helvetica Neue", sans-serif';
+export const PROFILE_CHART_FONT_SIZE = 14;
+
 // Busines-logic
 
 export const DEFAULT_COORDINATE_ROUNDING_SCALE = 6;

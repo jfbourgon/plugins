@@ -16,7 +16,7 @@ import { DOWNLOAD_BUTTON_TEMPLATE } from './templates/download-btn';
 
 import { RESULTS_LAYER_ID } from './constants';
 import { DEFAULT_DRAW_FILL_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_COLOR, DEFAULT_DRAW_LINE_SYMBOL_SIZE, DEFAULT_RADIUS_LINE_SYMBOL_COLOR, DEFAULT_RADIUS_FILL_SYMBOL_COLOR, DEFAULT_RADIUS_LINE_SYMBOL_SIZE } from './constants';
-
+import { PROFILE_CHART_FONT_FAMILY, PROFILE_CHART_FONT_SIZE } from './constants';
 import { DEFAULT_COORDINATE_ROUNDING_SCALE, VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP, VIEWSHED_DEFAULT_OFFSET, VIEWSHED_MAX_OFFSET, PROFILE_STEP_FACTORS, PROFILE_DEFAULT_STEP_FACTOR } from './constants'
 
 import { RESULT_PANEL_ID } from './constants';
@@ -283,8 +283,8 @@ export default class ResultPanel {
       $scope.updateChart = function() {
 
         const SMOOTH_FACTOR = 0.4;
-        const CHART_FONT_FAMILY = 'Roboto, "Helvetica Neue", sans-serif';
-        const CHART_FONT_SIZE = 14;
+        const CHART_FONT_FAMILY = PROFILE_CHART_FONT_FAMILY;
+        const CHART_FONT_SIZE = PROFILE_CHART_FONT_SIZE;
 
         let data = that.getResult();
 
