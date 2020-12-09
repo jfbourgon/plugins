@@ -163,9 +163,8 @@ ElevationServicePlugin.prototype.translations = {
         tooltip: 'Elevation Data Source'
       },
       statsSource: {
-        cdem: 'Elevation Model (CDEM)',
-        cdsm: 'Surface Model (CDSM)',
-        arcticdem2m: 'High Resolution Digital Surface Model',
+        hrdtm: 'High Resolution Digital Terrain Model',
+        hrdsm: 'High Resolution Digital Surface Model'
       },
       stats: {
         elevation: {
@@ -258,9 +257,8 @@ ElevationServicePlugin.prototype.translations = {
         tooltip: 'Source des données d\'élévation'
       },
       statsSource: {
-        cdem: 'Modèle d\'élévation (CDEM)',
-        cdsm: 'Modèle de surface (CDSM)',
-        arcticdem2m: 'Modèle numérique de surface haute résolution',
+        hrdtm: 'Modèle numérique de terrain haute résolution',
+        hrdsm: 'Modèle numérique de surface haute résolution'
       },
       stats: {
         elevation: {

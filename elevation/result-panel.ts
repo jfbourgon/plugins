@@ -462,14 +462,14 @@ export default class ResultPanel {
 
         let latLongGeometry = (<any>RAMP).GAPI.proj.localProjectGeometry(4326, $scope.geometry);
         let geojson = arcgisToGeoJSON(latLongGeometry);
-        let wkt = toWKT(geojson);
+        //let wkt = toWKT(geojson);
 
         // Build query url and params
 
         const url = $scope.services[$scope.statsSource];
 
         let params = {
-          path: wkt,
+          geom: geojson,
           steps: $scope.stepFactor
         };
 
@@ -542,7 +542,7 @@ export default class ResultPanel {
         // Retrieve request radius from map level
 
         let level = $scope.mapZoomLevel;
-        let radius = VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[level] || VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[10];
+        let radius = VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[level-2] || VIEWSHED_ZOOM_LEVEL_TO_RADIUS_MAP[8];
 
         let center = roundGeoJsonCoordinates(geojson, DEFAULT_COORDINATE_ROUNDING_SCALE);
 
